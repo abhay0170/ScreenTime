@@ -20,22 +20,48 @@ class AppUsageRecords extends Table {
 
 @DataClassName('TimeLimitRow')
 class TimeLimits extends Table {
-  TextColumn get packageName => text().unique()();
+  TextColumn get packageName => text()();
   IntColumn get dailyLimitMinutes => integer()();
   BoolColumn get notifyAt80 => boolean().withDefault(const Constant(true))();
   BoolColumn get notifyAt100 => boolean().withDefault(const Constant(true))();
   DateTimeColumn get createdAt => dateTime()();
   DateTimeColumn get updatedAt => dateTime()();
+
+  @override
+  Set<Column> get primaryKey => {packageName};
 }
 
-@DriftDatabase(tables: [AppUsageRecords, TimeLimits])
+/// Tracks whether we've already fired the 80%/100% notification for a
+/// package today, so the ~15 minute background check doesn't re-notify on
+/// every run.
+@DataClassName('LimitNotificationStateRow')
+class LimitNotificationState extends Table {
+  TextColumn get packageName => text()();
+  DateTimeColumn get lastNotifiedAt80Date => dateTime().nullable()();
+  DateTimeColumn get lastNotifiedAt100Date => dateTime().nullable()();
+
+  @override
+  Set<Column> get primaryKey => {packageName};
+}
+
+@DriftDatabase(tables: [AppUsageRecords, TimeLimits, LimitNotificationState])
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
+
+  @override
+  MigrationStrategy get migration => MigrationStrategy(
+    onCreate: (m) => m.createAll(),
+    onUpgrade: (m, from, to) async {
+      if (from < 2) {
+        await m.createTable(limitNotificationState);
+      }
+    },
+  );
 
   static LazyDatabase _openConnection() {
     return LazyDatabase(() async {

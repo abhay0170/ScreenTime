@@ -44,6 +44,10 @@ class _OnboardingPermissionScreenState
     final granted = await ref.read(usageStatsServiceProvider).checkPermission();
     if (!mounted) return;
     if (granted) {
+      // Right after Usage Access, also ask for notification permission
+      // (Android 13+) so threshold alerts can actually show.
+      await ref.read(notificationServiceProvider).requestPermission();
+      if (!mounted) return;
       context.go('/today');
     }
   }

@@ -350,7 +350,6 @@ class $TimeLimitsTable extends TimeLimits
     false,
     type: DriftSqlType.string,
     requiredDuringInsert: true,
-    defaultConstraints: GeneratedColumn.constraintIsAlways('UNIQUE'),
   );
   static const VerificationMeta _dailyLimitMinutesMeta = const VerificationMeta(
     'dailyLimitMinutes',
@@ -493,7 +492,7 @@ class $TimeLimitsTable extends TimeLimits
   }
 
   @override
-  Set<GeneratedColumn> get $primaryKey => const {};
+  Set<GeneratedColumn> get $primaryKey => {packageName};
   @override
   TimeLimitRow map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
@@ -775,6 +774,325 @@ class TimeLimitsCompanion extends UpdateCompanion<TimeLimitRow> {
   }
 }
 
+class $LimitNotificationStateTable extends LimitNotificationState
+    with TableInfo<$LimitNotificationStateTable, LimitNotificationStateRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $LimitNotificationStateTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _packageNameMeta = const VerificationMeta(
+    'packageName',
+  );
+  @override
+  late final GeneratedColumn<String> packageName = GeneratedColumn<String>(
+    'package_name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _lastNotifiedAt80DateMeta =
+      const VerificationMeta('lastNotifiedAt80Date');
+  @override
+  late final GeneratedColumn<DateTime> lastNotifiedAt80Date =
+      GeneratedColumn<DateTime>(
+        'last_notified_at80_date',
+        aliasedName,
+        true,
+        type: DriftSqlType.dateTime,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _lastNotifiedAt100DateMeta =
+      const VerificationMeta('lastNotifiedAt100Date');
+  @override
+  late final GeneratedColumn<DateTime> lastNotifiedAt100Date =
+      GeneratedColumn<DateTime>(
+        'last_notified_at100_date',
+        aliasedName,
+        true,
+        type: DriftSqlType.dateTime,
+        requiredDuringInsert: false,
+      );
+  @override
+  List<GeneratedColumn> get $columns => [
+    packageName,
+    lastNotifiedAt80Date,
+    lastNotifiedAt100Date,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'limit_notification_state';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<LimitNotificationStateRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('package_name')) {
+      context.handle(
+        _packageNameMeta,
+        packageName.isAcceptableOrUnknown(
+          data['package_name']!,
+          _packageNameMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_packageNameMeta);
+    }
+    if (data.containsKey('last_notified_at80_date')) {
+      context.handle(
+        _lastNotifiedAt80DateMeta,
+        lastNotifiedAt80Date.isAcceptableOrUnknown(
+          data['last_notified_at80_date']!,
+          _lastNotifiedAt80DateMeta,
+        ),
+      );
+    }
+    if (data.containsKey('last_notified_at100_date')) {
+      context.handle(
+        _lastNotifiedAt100DateMeta,
+        lastNotifiedAt100Date.isAcceptableOrUnknown(
+          data['last_notified_at100_date']!,
+          _lastNotifiedAt100DateMeta,
+        ),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {packageName};
+  @override
+  LimitNotificationStateRow map(
+    Map<String, dynamic> data, {
+    String? tablePrefix,
+  }) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return LimitNotificationStateRow(
+      packageName: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}package_name'],
+      )!,
+      lastNotifiedAt80Date: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}last_notified_at80_date'],
+      ),
+      lastNotifiedAt100Date: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}last_notified_at100_date'],
+      ),
+    );
+  }
+
+  @override
+  $LimitNotificationStateTable createAlias(String alias) {
+    return $LimitNotificationStateTable(attachedDatabase, alias);
+  }
+}
+
+class LimitNotificationStateRow extends DataClass
+    implements Insertable<LimitNotificationStateRow> {
+  final String packageName;
+  final DateTime? lastNotifiedAt80Date;
+  final DateTime? lastNotifiedAt100Date;
+  const LimitNotificationStateRow({
+    required this.packageName,
+    this.lastNotifiedAt80Date,
+    this.lastNotifiedAt100Date,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['package_name'] = Variable<String>(packageName);
+    if (!nullToAbsent || lastNotifiedAt80Date != null) {
+      map['last_notified_at80_date'] = Variable<DateTime>(lastNotifiedAt80Date);
+    }
+    if (!nullToAbsent || lastNotifiedAt100Date != null) {
+      map['last_notified_at100_date'] = Variable<DateTime>(
+        lastNotifiedAt100Date,
+      );
+    }
+    return map;
+  }
+
+  LimitNotificationStateCompanion toCompanion(bool nullToAbsent) {
+    return LimitNotificationStateCompanion(
+      packageName: Value(packageName),
+      lastNotifiedAt80Date: lastNotifiedAt80Date == null && nullToAbsent
+          ? const Value.absent()
+          : Value(lastNotifiedAt80Date),
+      lastNotifiedAt100Date: lastNotifiedAt100Date == null && nullToAbsent
+          ? const Value.absent()
+          : Value(lastNotifiedAt100Date),
+    );
+  }
+
+  factory LimitNotificationStateRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return LimitNotificationStateRow(
+      packageName: serializer.fromJson<String>(json['packageName']),
+      lastNotifiedAt80Date: serializer.fromJson<DateTime?>(
+        json['lastNotifiedAt80Date'],
+      ),
+      lastNotifiedAt100Date: serializer.fromJson<DateTime?>(
+        json['lastNotifiedAt100Date'],
+      ),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'packageName': serializer.toJson<String>(packageName),
+      'lastNotifiedAt80Date': serializer.toJson<DateTime?>(
+        lastNotifiedAt80Date,
+      ),
+      'lastNotifiedAt100Date': serializer.toJson<DateTime?>(
+        lastNotifiedAt100Date,
+      ),
+    };
+  }
+
+  LimitNotificationStateRow copyWith({
+    String? packageName,
+    Value<DateTime?> lastNotifiedAt80Date = const Value.absent(),
+    Value<DateTime?> lastNotifiedAt100Date = const Value.absent(),
+  }) => LimitNotificationStateRow(
+    packageName: packageName ?? this.packageName,
+    lastNotifiedAt80Date: lastNotifiedAt80Date.present
+        ? lastNotifiedAt80Date.value
+        : this.lastNotifiedAt80Date,
+    lastNotifiedAt100Date: lastNotifiedAt100Date.present
+        ? lastNotifiedAt100Date.value
+        : this.lastNotifiedAt100Date,
+  );
+  LimitNotificationStateRow copyWithCompanion(
+    LimitNotificationStateCompanion data,
+  ) {
+    return LimitNotificationStateRow(
+      packageName: data.packageName.present
+          ? data.packageName.value
+          : this.packageName,
+      lastNotifiedAt80Date: data.lastNotifiedAt80Date.present
+          ? data.lastNotifiedAt80Date.value
+          : this.lastNotifiedAt80Date,
+      lastNotifiedAt100Date: data.lastNotifiedAt100Date.present
+          ? data.lastNotifiedAt100Date.value
+          : this.lastNotifiedAt100Date,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('LimitNotificationStateRow(')
+          ..write('packageName: $packageName, ')
+          ..write('lastNotifiedAt80Date: $lastNotifiedAt80Date, ')
+          ..write('lastNotifiedAt100Date: $lastNotifiedAt100Date')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(packageName, lastNotifiedAt80Date, lastNotifiedAt100Date);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is LimitNotificationStateRow &&
+          other.packageName == this.packageName &&
+          other.lastNotifiedAt80Date == this.lastNotifiedAt80Date &&
+          other.lastNotifiedAt100Date == this.lastNotifiedAt100Date);
+}
+
+class LimitNotificationStateCompanion
+    extends UpdateCompanion<LimitNotificationStateRow> {
+  final Value<String> packageName;
+  final Value<DateTime?> lastNotifiedAt80Date;
+  final Value<DateTime?> lastNotifiedAt100Date;
+  final Value<int> rowid;
+  const LimitNotificationStateCompanion({
+    this.packageName = const Value.absent(),
+    this.lastNotifiedAt80Date = const Value.absent(),
+    this.lastNotifiedAt100Date = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  LimitNotificationStateCompanion.insert({
+    required String packageName,
+    this.lastNotifiedAt80Date = const Value.absent(),
+    this.lastNotifiedAt100Date = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : packageName = Value(packageName);
+  static Insertable<LimitNotificationStateRow> custom({
+    Expression<String>? packageName,
+    Expression<DateTime>? lastNotifiedAt80Date,
+    Expression<DateTime>? lastNotifiedAt100Date,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (packageName != null) 'package_name': packageName,
+      if (lastNotifiedAt80Date != null)
+        'last_notified_at80_date': lastNotifiedAt80Date,
+      if (lastNotifiedAt100Date != null)
+        'last_notified_at100_date': lastNotifiedAt100Date,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  LimitNotificationStateCompanion copyWith({
+    Value<String>? packageName,
+    Value<DateTime?>? lastNotifiedAt80Date,
+    Value<DateTime?>? lastNotifiedAt100Date,
+    Value<int>? rowid,
+  }) {
+    return LimitNotificationStateCompanion(
+      packageName: packageName ?? this.packageName,
+      lastNotifiedAt80Date: lastNotifiedAt80Date ?? this.lastNotifiedAt80Date,
+      lastNotifiedAt100Date:
+          lastNotifiedAt100Date ?? this.lastNotifiedAt100Date,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (packageName.present) {
+      map['package_name'] = Variable<String>(packageName.value);
+    }
+    if (lastNotifiedAt80Date.present) {
+      map['last_notified_at80_date'] = Variable<DateTime>(
+        lastNotifiedAt80Date.value,
+      );
+    }
+    if (lastNotifiedAt100Date.present) {
+      map['last_notified_at100_date'] = Variable<DateTime>(
+        lastNotifiedAt100Date.value,
+      );
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('LimitNotificationStateCompanion(')
+          ..write('packageName: $packageName, ')
+          ..write('lastNotifiedAt80Date: $lastNotifiedAt80Date, ')
+          ..write('lastNotifiedAt100Date: $lastNotifiedAt100Date, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -782,6 +1100,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     this,
   );
   late final $TimeLimitsTable timeLimits = $TimeLimitsTable(this);
+  late final $LimitNotificationStateTable limitNotificationState =
+      $LimitNotificationStateTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -789,6 +1109,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   List<DatabaseSchemaEntity> get allSchemaEntities => [
     appUsageRecords,
     timeLimits,
+    limitNotificationState,
   ];
 }
 
@@ -1212,6 +1533,193 @@ typedef $$TimeLimitsTableProcessedTableManager =
       TimeLimitRow,
       PrefetchHooks Function()
     >;
+typedef $$LimitNotificationStateTableCreateCompanionBuilder =
+    LimitNotificationStateCompanion Function({
+      required String packageName,
+      Value<DateTime?> lastNotifiedAt80Date,
+      Value<DateTime?> lastNotifiedAt100Date,
+      Value<int> rowid,
+    });
+typedef $$LimitNotificationStateTableUpdateCompanionBuilder =
+    LimitNotificationStateCompanion Function({
+      Value<String> packageName,
+      Value<DateTime?> lastNotifiedAt80Date,
+      Value<DateTime?> lastNotifiedAt100Date,
+      Value<int> rowid,
+    });
+
+class $$LimitNotificationStateTableFilterComposer
+    extends Composer<_$AppDatabase, $LimitNotificationStateTable> {
+  $$LimitNotificationStateTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get packageName => $composableBuilder(
+    column: $table.packageName,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get lastNotifiedAt80Date => $composableBuilder(
+    column: $table.lastNotifiedAt80Date,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get lastNotifiedAt100Date => $composableBuilder(
+    column: $table.lastNotifiedAt100Date,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$LimitNotificationStateTableOrderingComposer
+    extends Composer<_$AppDatabase, $LimitNotificationStateTable> {
+  $$LimitNotificationStateTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get packageName => $composableBuilder(
+    column: $table.packageName,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get lastNotifiedAt80Date => $composableBuilder(
+    column: $table.lastNotifiedAt80Date,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get lastNotifiedAt100Date => $composableBuilder(
+    column: $table.lastNotifiedAt100Date,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$LimitNotificationStateTableAnnotationComposer
+    extends Composer<_$AppDatabase, $LimitNotificationStateTable> {
+  $$LimitNotificationStateTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get packageName => $composableBuilder(
+    column: $table.packageName,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get lastNotifiedAt80Date => $composableBuilder(
+    column: $table.lastNotifiedAt80Date,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get lastNotifiedAt100Date => $composableBuilder(
+    column: $table.lastNotifiedAt100Date,
+    builder: (column) => column,
+  );
+}
+
+class $$LimitNotificationStateTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $LimitNotificationStateTable,
+          LimitNotificationStateRow,
+          $$LimitNotificationStateTableFilterComposer,
+          $$LimitNotificationStateTableOrderingComposer,
+          $$LimitNotificationStateTableAnnotationComposer,
+          $$LimitNotificationStateTableCreateCompanionBuilder,
+          $$LimitNotificationStateTableUpdateCompanionBuilder,
+          (
+            LimitNotificationStateRow,
+            BaseReferences<
+              _$AppDatabase,
+              $LimitNotificationStateTable,
+              LimitNotificationStateRow
+            >,
+          ),
+          LimitNotificationStateRow,
+          PrefetchHooks Function()
+        > {
+  $$LimitNotificationStateTableTableManager(
+    _$AppDatabase db,
+    $LimitNotificationStateTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$LimitNotificationStateTableFilterComposer(
+                $db: db,
+                $table: table,
+              ),
+          createOrderingComposer: () =>
+              $$LimitNotificationStateTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer: () =>
+              $$LimitNotificationStateTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> packageName = const Value.absent(),
+                Value<DateTime?> lastNotifiedAt80Date = const Value.absent(),
+                Value<DateTime?> lastNotifiedAt100Date = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => LimitNotificationStateCompanion(
+                packageName: packageName,
+                lastNotifiedAt80Date: lastNotifiedAt80Date,
+                lastNotifiedAt100Date: lastNotifiedAt100Date,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String packageName,
+                Value<DateTime?> lastNotifiedAt80Date = const Value.absent(),
+                Value<DateTime?> lastNotifiedAt100Date = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => LimitNotificationStateCompanion.insert(
+                packageName: packageName,
+                lastNotifiedAt80Date: lastNotifiedAt80Date,
+                lastNotifiedAt100Date: lastNotifiedAt100Date,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$LimitNotificationStateTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $LimitNotificationStateTable,
+      LimitNotificationStateRow,
+      $$LimitNotificationStateTableFilterComposer,
+      $$LimitNotificationStateTableOrderingComposer,
+      $$LimitNotificationStateTableAnnotationComposer,
+      $$LimitNotificationStateTableCreateCompanionBuilder,
+      $$LimitNotificationStateTableUpdateCompanionBuilder,
+      (
+        LimitNotificationStateRow,
+        BaseReferences<
+          _$AppDatabase,
+          $LimitNotificationStateTable,
+          LimitNotificationStateRow
+        >,
+      ),
+      LimitNotificationStateRow,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -1220,4 +1728,9 @@ class $AppDatabaseManager {
       $$AppUsageRecordsTableTableManager(_db, _db.appUsageRecords);
   $$TimeLimitsTableTableManager get timeLimits =>
       $$TimeLimitsTableTableManager(_db, _db.timeLimits);
+  $$LimitNotificationStateTableTableManager get limitNotificationState =>
+      $$LimitNotificationStateTableTableManager(
+        _db,
+        _db.limitNotificationState,
+      );
 }

@@ -1,12 +1,12 @@
-import '../../../data/local/database.dart';
 import '../../../domain/models/app_usage_info.dart';
+import '../../../domain/models/time_limit.dart';
 
 /// Apps whose remaining time before hitting their daily limit is at or
 /// below [threshold]. Returns an empty list when no limits are configured
-/// yet, which is expected until the Limits feature exists.
+/// yet, which is expected until the user sets any on the Limits screen.
 List<AppUsageInfo> findNearLimitApps(
   List<AppUsageInfo> usage,
-  List<TimeLimitRow> limits, {
+  List<TimeLimit> limits, {
   Duration threshold = const Duration(minutes: 15),
 }) {
   final nearLimit = <AppUsageInfo>[];

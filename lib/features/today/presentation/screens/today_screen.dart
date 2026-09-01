@@ -15,6 +15,8 @@ class TodayScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final usageAsync = ref.watch(todayUsageProvider);
+    // Runs the threshold check whenever usage (re)loads; result is unused.
+    ref.watch(thresholdCheckProvider);
 
     return Scaffold(
       body: SafeArea(
@@ -22,7 +24,7 @@ class TodayScreen extends ConsumerWidget {
           onRefresh: () async {
             ref.invalidate(todayUsageProvider);
             ref.invalidate(yesterdayTotalProvider);
-            ref.invalidate(activeTimeLimitsProvider);
+            ref.invalidate(allLimitsProvider);
             await ref.read(todayUsageProvider.future);
           },
           child: usageAsync.when(
@@ -141,7 +143,7 @@ class _TodayBody extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final yesterdayAsync = ref.watch(yesterdayTotalProvider);
-    final limitsAsync = ref.watch(activeTimeLimitsProvider);
+    final limitsAsync = ref.watch(allLimitsProvider);
 
     final todayTotal = usage.fold<Duration>(
       Duration.zero,

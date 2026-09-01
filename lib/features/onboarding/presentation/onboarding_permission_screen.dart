@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/di/providers.dart';
 
@@ -8,9 +9,7 @@ import '../../../core/di/providers.dart';
 /// for this permission, we watch for the app resuming (the user coming
 /// back from Settings) and re-check.
 class OnboardingPermissionScreen extends ConsumerStatefulWidget {
-  final VoidCallback onGranted;
-
-  const OnboardingPermissionScreen({super.key, required this.onGranted});
+  const OnboardingPermissionScreen({super.key});
 
   @override
   ConsumerState<OnboardingPermissionScreen> createState() =>
@@ -45,7 +44,7 @@ class _OnboardingPermissionScreenState
     final granted = await ref.read(usageStatsServiceProvider).checkPermission();
     if (!mounted) return;
     if (granted) {
-      widget.onGranted();
+      context.go('/today');
     }
   }
 

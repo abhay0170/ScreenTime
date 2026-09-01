@@ -1,0 +1,84 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+
+import '../../features/limits/presentation/limits_screen.dart';
+import '../../features/onboarding/presentation/onboarding_permission_screen.dart';
+import '../../features/today/presentation/screens/today_screen.dart';
+import '../../features/trends/presentation/trends_screen.dart';
+import '../../features/widgets/presentation/widgets_screen.dart';
+import '../di/providers.dart';
+import 'themed_bottom_nav_bar.dart';
+
+/// The 4-tab shell's branches, in the order they appear in the bottom nav.
+const _tabPaths = ['/today', '/trends', '/limits', '/widgets'];
+
+final goRouterProvider = Provider<GoRouter>((ref) {
+  final usageStatsService = ref.watch(usageStatsServiceProvider);
+
+  return GoRouter(
+    initialLocation: '/today',
+    redirect: (context, state) async {
+      final granted = await usageStatsService.checkPermission();
+      final atOnboarding = state.matchedLocation == '/onboarding';
+
+      if (!granted) return atOnboarding ? null : '/onboarding';
+      if (atOnboarding) return '/today';
+      return null;
+    },
+    routes: [
+      GoRoute(
+        path: '/onboarding',
+        builder: (context, state) => const OnboardingPermissionScreen(),
+      ),
+      StatefulShellRoute.indexedStack(
+        builder: (context, state, navigationShell) {
+          return Scaffold(
+            body: navigationShell,
+            bottomNavigationBar: ThemedBottomNavBar(
+              currentIndex: navigationShell.currentIndex,
+              onTap: (index) => navigationShell.goBranch(
+                index,
+                initialLocation: index == navigationShell.currentIndex,
+              ),
+            ),
+          );
+        },
+        branches: [
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: _tabPaths[0],
+                builder: (context, state) => const TodayScreen(),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: _tabPaths[1],
+                builder: (context, state) => const TrendsScreen(),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: _tabPaths[2],
+                builder: (context, state) => const LimitsScreen(),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: _tabPaths[3],
+                builder: (context, state) => const WidgetsScreen(),
+              ),
+            ],
+          ),
+        ],
+      ),
+    ],
+  );
+});

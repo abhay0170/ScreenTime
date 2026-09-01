@@ -10,6 +10,9 @@ const minTrackedUsageSeconds = 10;
 abstract class UsageRepository {
   /// Today's per-app foreground usage, sorted by time spent descending.
   Future<List<AppUsageInfo>> getTodayUsage();
+
+  /// Total foreground time across all tracked apps on [date].
+  Future<Duration> getTotalForDate(DateTime date);
 }
 
 class UsageRepositoryImpl implements UsageRepository {
@@ -28,15 +31,47 @@ class UsageRepositoryImpl implements UsageRepository {
   @override
   Future<List<AppUsageInfo>> getTodayUsage() async {
     final now = DateTime.now();
-    final startOfDay = DateTime(now.year, now.month, now.day);
+    final startOfDay = _startOfDay(now);
+    final usage = await _resolveFilteredUsage(startOfDay, now);
 
-    final rawUsage = await _usageStatsService.queryUsageForRange(
-      startOfDay,
-      now,
+    for (final app in usage) {
+      await _database
+          .into(_database.appUsageRecords)
+          .insertOnConflictUpdate(
+            AppUsageRecordsCompanion.insert(
+              packageName: app.packageName,
+              date: startOfDay,
+              totalSeconds: app.totalTimeToday.inSeconds,
+              lastSynced: now,
+            ),
+          );
+    }
+
+    usage.sort((a, b) => b.totalTimeToday.compareTo(a.totalTimeToday));
+    return usage;
+  }
+
+  @override
+  Future<Duration> getTotalForDate(DateTime date) async {
+    final startOfDay = _startOfDay(date);
+    final endOfDay = startOfDay.add(const Duration(days: 1));
+    final usage = await _resolveFilteredUsage(startOfDay, endOfDay);
+    return usage.fold<Duration>(
+      Duration.zero,
+      (total, app) => total + app.totalTimeToday,
     );
+  }
+
+  /// Queries raw usage for [start, end), resolves each package's app info,
+  /// and drops noise, system, and non-launchable packages. Does not persist
+  /// anything — callers decide whether the range represents "today".
+  Future<List<AppUsageInfo>> _resolveFilteredUsage(
+    DateTime start,
+    DateTime end,
+  ) async {
+    final rawUsage = await _usageStatsService.queryUsageForRange(start, end);
 
     final result = <AppUsageInfo>[];
-
     for (final entry in rawUsage.entries) {
       final packageName = entry.key;
       final seconds = entry.value;
@@ -45,17 +80,6 @@ class UsageRepositoryImpl implements UsageRepository {
       final appInfo = await _appInfoResolver.resolve(packageName);
       if (appInfo == null) continue;
       if (appInfo.isSystemApp || !appInfo.isLaunchableApp) continue;
-
-      await _database
-          .into(_database.appUsageRecords)
-          .insertOnConflictUpdate(
-            AppUsageRecordsCompanion.insert(
-              packageName: packageName,
-              date: startOfDay,
-              totalSeconds: seconds,
-              lastSynced: now,
-            ),
-          );
 
       result.add(
         AppUsageInfo(
@@ -66,8 +90,10 @@ class UsageRepositoryImpl implements UsageRepository {
         ),
       );
     }
-
-    result.sort((a, b) => b.totalTimeToday.compareTo(a.totalTimeToday));
     return result;
+  }
+
+  static DateTime _startOfDay(DateTime dateTime) {
+    return DateTime(dateTime.year, dateTime.month, dateTime.day);
   }
 }

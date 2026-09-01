@@ -34,3 +34,18 @@ final todayUsageProvider = FutureProvider.autoDispose<List<AppUsageInfo>>((
 ) {
   return ref.watch(usageRepositoryProvider).getTodayUsage();
 });
+
+/// Yesterday's total foreground time, for the "vs. yesterday" trend.
+final yesterdayTotalProvider = FutureProvider.autoDispose<Duration>((ref) {
+  final yesterday = DateTime.now().subtract(const Duration(days: 1));
+  return ref.watch(usageRepositoryProvider).getTotalForDate(yesterday);
+});
+
+/// All configured time limits, used to flag apps nearing their limit on
+/// the Today screen. Empty until the Limits feature lets users set any.
+final activeTimeLimitsProvider = FutureProvider.autoDispose<List<TimeLimitRow>>(
+  (ref) {
+    final database = ref.watch(appDatabaseProvider);
+    return database.select(database.timeLimits).get();
+  },
+);

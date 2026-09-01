@@ -147,7 +147,7 @@ class _TodayBody extends ConsumerWidget {
 
     final todayTotal = usage.fold<Duration>(
       Duration.zero,
-      (sum, app) => sum + app.totalTimeToday,
+      (sum, app) => sum + app.totalTime,
     );
     final topApps = usage.take(4).toList();
     final nearLimitApps = limitsAsync.maybeWhen(

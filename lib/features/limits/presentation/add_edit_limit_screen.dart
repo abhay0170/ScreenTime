@@ -1,11 +1,10 @@
-import 'dart:typed_data';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/di/providers.dart';
 import '../../../core/utils/duration_formatter.dart';
+import '../../../core/widgets/app_icon.dart';
 import '../../../domain/models/app_usage_info.dart';
 import '../../../domain/models/time_limit.dart';
 
@@ -249,28 +248,14 @@ class _AppPicker extends ConsumerWidget {
             for (final app in apps)
               ListTile(
                 contentPadding: EdgeInsets.zero,
-                leading: _PickerAppIcon(bytes: app.iconBytes),
+                leading: AppIcon(bytes: app.iconBytes),
                 title: Text(app.appName),
-                subtitle: Text('${formatDuration(app.totalTimeToday)} today'),
+                subtitle: Text('${formatDuration(app.totalTime)} today'),
                 onTap: () => onSelected(app),
               ),
           ],
         );
       },
-    );
-  }
-}
-
-class _PickerAppIcon extends StatelessWidget {
-  final Uint8List? bytes;
-
-  const _PickerAppIcon({required this.bytes});
-
-  @override
-  Widget build(BuildContext context) {
-    return CircleAvatar(
-      backgroundImage: bytes != null ? MemoryImage(bytes!) : null,
-      child: bytes == null ? const Icon(Icons.apps) : null,
     );
   }
 }

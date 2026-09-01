@@ -41,13 +41,13 @@ class UsageRepositoryImpl implements UsageRepository {
             AppUsageRecordsCompanion.insert(
               packageName: app.packageName,
               date: startOfDay,
-              totalSeconds: app.totalTimeToday.inSeconds,
+              totalSeconds: app.totalTime.inSeconds,
               lastSynced: now,
             ),
           );
     }
 
-    usage.sort((a, b) => b.totalTimeToday.compareTo(a.totalTimeToday));
+    usage.sort((a, b) => b.totalTime.compareTo(a.totalTime));
     return usage;
   }
 
@@ -58,7 +58,7 @@ class UsageRepositoryImpl implements UsageRepository {
     final usage = await _resolveFilteredUsage(startOfDay, endOfDay);
     return usage.fold<Duration>(
       Duration.zero,
-      (total, app) => total + app.totalTimeToday,
+      (total, app) => total + app.totalTime,
     );
   }
 
@@ -86,7 +86,7 @@ class UsageRepositoryImpl implements UsageRepository {
           packageName: packageName,
           appName: appInfo.name,
           iconBytes: appInfo.icon,
-          totalTimeToday: Duration(seconds: seconds),
+          totalTime: Duration(seconds: seconds),
         ),
       );
     }

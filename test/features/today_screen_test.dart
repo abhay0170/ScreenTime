@@ -18,19 +18,19 @@ final _fakeUsage = [
     packageName: 'com.example.social',
     appName: 'Chatter',
     iconBytes: null,
-    totalTimeToday: Duration(hours: 1, minutes: 30),
+    totalTime: Duration(hours: 1, minutes: 30),
   ),
   const AppUsageInfo(
     packageName: 'com.example.game',
     appName: 'Puzzle Quest',
     iconBytes: null,
-    totalTimeToday: Duration(minutes: 45),
+    totalTime: Duration(minutes: 45),
   ),
   const AppUsageInfo(
     packageName: 'com.example.reader',
     appName: 'Reader',
     iconBytes: null,
-    totalTimeToday: Duration(minutes: 20),
+    totalTime: Duration(minutes: 20),
   ),
 ];
 

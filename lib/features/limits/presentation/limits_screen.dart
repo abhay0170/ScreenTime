@@ -1,11 +1,10 @@
-import 'dart:typed_data';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/di/providers.dart';
 import '../../../core/utils/duration_formatter.dart';
+import '../../../core/widgets/app_icon.dart';
 import '../../../domain/models/app_usage_info.dart';
 import '../../../domain/models/limit_with_usage.dart';
 
@@ -179,7 +178,7 @@ class _ActiveLimitTile extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 10),
         child: Row(
           children: [
-            _AppIcon(bytes: entry.iconBytes),
+            AppIcon(bytes: entry.iconBytes),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
@@ -235,7 +234,7 @@ class _OtherAppTile extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(
         children: [
-          _AppIcon(bytes: app.iconBytes),
+          AppIcon(bytes: app.iconBytes),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -243,7 +242,7 @@ class _OtherAppTile extends StatelessWidget {
               children: [
                 Text(app.appName, overflow: TextOverflow.ellipsis),
                 Text(
-                  '${formatDuration(app.totalTimeToday)} today',
+                  '${formatDuration(app.totalTime)} today',
                   style: theme.textTheme.bodySmall,
                 ),
               ],
@@ -257,21 +256,6 @@ class _OtherAppTile extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
-}
-
-class _AppIcon extends StatelessWidget {
-  final Uint8List? bytes;
-
-  const _AppIcon({required this.bytes});
-
-  @override
-  Widget build(BuildContext context) {
-    return CircleAvatar(
-      radius: 18,
-      backgroundImage: bytes != null ? MemoryImage(bytes!) : null,
-      child: bytes == null ? const Icon(Icons.apps, size: 18) : null,
     );
   }
 }

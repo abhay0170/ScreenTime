@@ -1,12 +1,15 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:installed_apps/app_info.dart';
 
 import '../../data/local/database.dart';
 import '../../data/repositories/limits_repository.dart';
+import '../../data/repositories/trends_repository.dart';
 import '../../data/repositories/usage_repository.dart';
 import '../../data/services/app_info_resolver.dart';
 import '../../data/services/notification_service.dart';
 import '../../data/services/usage_stats_service.dart';
 import '../../domain/models/app_usage_info.dart';
+import '../../domain/models/daily_total.dart';
 import '../../domain/models/limit_with_usage.dart';
 import '../../domain/models/time_limit.dart';
 
@@ -49,6 +52,13 @@ final limitsRepositoryProvider = Provider<LimitsRepository>((ref) {
   );
 });
 
+final trendsRepositoryProvider = Provider<TrendsRepository>((ref) {
+  return TrendsRepositoryImpl(
+    database: ref.watch(appDatabaseProvider),
+    appInfoResolver: ref.watch(appInfoResolverProvider),
+  );
+});
+
 /// Today's real per-app usage, fetched (and upserted into Drift) on demand.
 final todayUsageProvider = FutureProvider.autoDispose<List<AppUsageInfo>>((
   ref,
@@ -75,6 +85,14 @@ final limitsWithUsageProvider =
       return ref.watch(limitsRepositoryProvider).getLimitsWithUsage();
     });
 
+/// The limit configured for one specific app, if any — used by App Detail.
+final limitForPackageProvider = FutureProvider.autoDispose
+    .family<TimeLimit?, String>((ref, packageName) {
+      return ref
+          .watch(limitsRepositoryProvider)
+          .getLimitForPackage(packageName);
+    });
+
 /// Apps used today that don't have a limit yet — the pool the Add Limit
 /// app picker and the Limits screen's "Other apps" section draw from.
 final unlimitedTrackedAppsProvider =
@@ -94,3 +112,55 @@ final thresholdCheckProvider = FutureProvider.autoDispose<void>((ref) async {
   await ref.watch(todayUsageProvider.future);
   await ref.read(limitsRepositoryProvider).checkAndNotifyThresholds();
 });
+
+/// A named recent date range, resolved to `[start, end)` at read time so
+/// "today" always means the actual current day.
+enum TrendsRange {
+  weekly(7),
+  monthly(30);
+
+  const TrendsRange(this.days);
+
+  final int days;
+
+  (DateTime start, DateTime end) resolve() {
+    final now = DateTime.now();
+    final endExclusive = DateTime(
+      now.year,
+      now.month,
+      now.day,
+    ).add(const Duration(days: 1));
+    return (endExclusive.subtract(Duration(days: days)), endExclusive);
+  }
+}
+
+/// Daily totals for the Trends chart, over the selected range.
+final dailyTotalsProvider = FutureProvider.autoDispose
+    .family<List<DailyTotal>, TrendsRange>((ref, range) {
+      final (start, end) = range.resolve();
+      return ref.watch(trendsRepositoryProvider).getDailyTotals(start, end);
+    });
+
+/// Per-app totals for the Trends ranked list, over the selected range.
+final topAppsForRangeProvider = FutureProvider.autoDispose
+    .family<List<AppUsageInfo>, TrendsRange>((ref, range) {
+      final (start, end) = range.resolve();
+      return ref.watch(trendsRepositoryProvider).getTopAppsForRange(start, end);
+    });
+
+/// The last 7 days of usage for one app, for App Detail's chart.
+final appDetailDailyTotalsProvider = FutureProvider.autoDispose
+    .family<List<DailyTotal>, String>((ref, packageName) {
+      final (start, end) = TrendsRange.weekly.resolve();
+      return ref
+          .watch(trendsRepositoryProvider)
+          .getDailyTotalsForApp(packageName, start, end);
+    });
+
+/// Resolves a package's display name/icon directly, regardless of whether
+/// it shows up in today's usage — needed by App Detail when opened from a
+/// Trends entry for an app that wasn't used today.
+final appInfoForPackageProvider = FutureProvider.autoDispose
+    .family<AppInfo?, String>((ref, packageName) {
+      return ref.watch(appInfoResolverProvider).resolve(packageName);
+    });

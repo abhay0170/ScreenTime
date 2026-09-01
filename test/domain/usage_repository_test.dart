@@ -103,9 +103,9 @@ void main() {
       'com.social.app',
     ]);
     expect(result[0].appName, 'Game');
-    expect(result[0].totalTimeToday, const Duration(hours: 1));
+    expect(result[0].totalTime, const Duration(hours: 1));
     expect(result[1].appName, 'Social');
-    expect(result[1].totalTimeToday, const Duration(minutes: 30));
+    expect(result[1].totalTime, const Duration(minutes: 30));
 
     verifyNever(() => appInfoResolver.resolve('com.short.lived'));
   });

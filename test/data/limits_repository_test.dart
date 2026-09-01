@@ -25,7 +25,7 @@ AppUsageInfo _usageOf(Duration duration) {
     packageName: _packageName,
     appName: _appName,
     iconBytes: null,
-    totalTimeToday: duration,
+    totalTime: duration,
   );
 }
 

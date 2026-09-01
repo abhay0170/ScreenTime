@@ -22,7 +22,7 @@ List<AppUsageInfo> findNearLimitApps(
     if (app == null) continue;
 
     final remaining =
-        Duration(minutes: limit.dailyLimitMinutes) - app.totalTimeToday;
+        Duration(minutes: limit.dailyLimitMinutes) - app.totalTime;
     if (remaining <= threshold) {
       nearLimit.add(app);
     }

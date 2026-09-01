@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../features/app_detail/presentation/app_detail_screen.dart';
 import '../../features/limits/presentation/add_edit_limit_screen.dart';
 import '../../features/limits/presentation/limits_screen.dart';
 import '../../features/onboarding/presentation/onboarding_permission_screen.dart';
@@ -44,6 +45,11 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => AddEditLimitScreen(
           packageName: state.pathParameters['packageName']!,
         ),
+      ),
+      GoRoute(
+        path: '/app-detail/:packageName',
+        builder: (context, state) =>
+            AppDetailScreen(packageName: state.pathParameters['packageName']!),
       ),
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) {

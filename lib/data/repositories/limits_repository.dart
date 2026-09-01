@@ -63,7 +63,7 @@ class LimitsRepositoryImpl implements LimitsRepository {
             limit: limit,
             appName: app.appName,
             iconBytes: app.iconBytes,
-            usedToday: app.totalTimeToday,
+            usedToday: app.totalTime,
           ),
         );
         continue;
@@ -133,7 +133,7 @@ class LimitsRepositoryImpl implements LimitsRepository {
       if (limit.dailyLimitMinutes <= 0) continue;
 
       final limitSeconds = limit.dailyLimitMinutes * 60;
-      final percent = app.totalTimeToday.inSeconds / limitSeconds * 100;
+      final percent = app.totalTime.inSeconds / limitSeconds * 100;
 
       final state = await _getState(limit.packageName);
       var newAt80 = state?.lastNotifiedAt80Date;

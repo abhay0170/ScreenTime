@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../core/di/providers.dart';
 import '../../../../core/utils/date_formatter.dart';
@@ -95,8 +96,7 @@ class _TodayHeader extends StatelessWidget {
         ),
         IconButton(
           icon: const Icon(Icons.settings_outlined),
-          // Settings screen isn't built yet.
-          onPressed: () {},
+          onPressed: () => context.push('/settings'),
         ),
       ],
     );

@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/di/providers.dart';
 import '../../../core/theme/app_theme_style.dart';
 import '../../../core/utils/duration_formatter.dart';
+import '../../../core/widgets/status_badge.dart';
 import '../../../domain/models/app_usage_info.dart';
 
 class WidgetsScreen extends ConsumerWidget {
@@ -94,7 +95,10 @@ class _TodayOverviewWidgetCard extends StatelessWidget {
                     style: theme.textTheme.titleMedium,
                   ),
                 ),
-                _Badge(label: 'NO SETUP', color: theme.colorScheme.primary),
+                StatusBadge(
+                  label: 'NO SETUP',
+                  color: theme.colorScheme.primary,
+                ),
               ],
             ),
             const SizedBox(height: 4),
@@ -244,38 +248,11 @@ class _ConfigurableWidgetCard extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 8),
-            _Badge(
+            StatusBadge(
               label: 'SETUP REQUIRED',
               color: theme.colorScheme.onSurfaceVariant,
             ),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-class _Badge extends StatelessWidget {
-  final String label;
-  final Color color;
-
-  const _Badge({required this.label, required this.color});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          color: color,
-          fontSize: 10,
-          fontWeight: FontWeight.bold,
-          letterSpacing: 0.5,
         ),
       ),
     );

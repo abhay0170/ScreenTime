@@ -6,6 +6,7 @@ import '../repositories/limits_repository.dart';
 import '../repositories/usage_repository.dart';
 import 'app_info_resolver.dart';
 import 'notification_service.dart';
+import 'settings_service.dart';
 import 'usage_stats_service.dart';
 import 'widget_service.dart';
 
@@ -46,6 +47,7 @@ void callbackDispatcher() {
         usageRepository: usageRepository,
         appInfoResolver: AppInfoResolver(),
         notificationService: notificationService,
+        settingsService: SettingsService(),
       );
 
       // Fetched once and reused for the threshold check and all three

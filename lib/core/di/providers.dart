@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:installed_apps/app_info.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
 import '../../data/local/database.dart';
 import '../../data/repositories/limits_repository.dart';
@@ -7,6 +8,7 @@ import '../../data/repositories/trends_repository.dart';
 import '../../data/repositories/usage_repository.dart';
 import '../../data/services/app_info_resolver.dart';
 import '../../data/services/notification_service.dart';
+import '../../data/services/settings_service.dart';
 import '../../data/services/usage_stats_service.dart';
 import '../../data/services/widget_config_service.dart';
 import '../../data/services/widget_service.dart';
@@ -46,12 +48,17 @@ final usageRepositoryProvider = Provider<UsageRepository>((ref) {
   );
 });
 
+final settingsServiceProvider = Provider<SettingsService>((ref) {
+  return SettingsService();
+});
+
 final limitsRepositoryProvider = Provider<LimitsRepository>((ref) {
   return LimitsRepositoryImpl(
     database: ref.watch(appDatabaseProvider),
     usageRepository: ref.watch(usageRepositoryProvider),
     appInfoResolver: ref.watch(appInfoResolverProvider),
     notificationService: ref.watch(notificationServiceProvider),
+    settingsService: ref.watch(settingsServiceProvider),
   );
 });
 
@@ -221,3 +228,25 @@ final appInfoForPackageProvider = FutureProvider.autoDispose
     .family<AppInfo?, String>((ref, packageName) {
       return ref.watch(appInfoResolverProvider).resolve(packageName);
     });
+
+/// Usage Access can be revoked from system settings at any time, so this
+/// is a fresh native check every time it's watched — not a cached value.
+final usageAccessStatusProvider = FutureProvider.autoDispose<bool>((ref) {
+  return ref.watch(usageStatsServiceProvider).checkPermission();
+});
+
+/// Same idea for the OS-level notification permission (distinct from the
+/// in-app [notificationPreferenceProvider] toggle).
+final notificationPermissionEnabledProvider = FutureProvider.autoDispose<bool>((
+  ref,
+) async {
+  final enabled = await ref
+      .watch(notificationServiceProvider)
+      .areNotificationsEnabled();
+  return enabled ?? true;
+});
+
+/// App version/build number for Settings > About.
+final packageInfoProvider = FutureProvider.autoDispose<PackageInfo>((ref) {
+  return PackageInfo.fromPlatform();
+});

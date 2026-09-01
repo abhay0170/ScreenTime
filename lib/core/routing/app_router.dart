@@ -6,6 +6,7 @@ import '../../features/app_detail/presentation/app_detail_screen.dart';
 import '../../features/limits/presentation/add_edit_limit_screen.dart';
 import '../../features/limits/presentation/limits_screen.dart';
 import '../../features/onboarding/presentation/onboarding_permission_screen.dart';
+import '../../features/settings/presentation/settings_screen.dart';
 import '../../features/today/presentation/screens/today_screen.dart';
 import '../../features/trends/presentation/trends_screen.dart';
 import '../../features/widgets/presentation/widget_config_screen.dart';
@@ -51,6 +52,10 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         path: '/app-detail/:packageName',
         builder: (context, state) =>
             AppDetailScreen(packageName: state.pathParameters['packageName']!),
+      ),
+      GoRoute(
+        path: '/settings',
+        builder: (context, state) => const SettingsScreen(),
       ),
       // The initial route for the fresh engine BaseWidgetConfigActivity
       // spawns when the user adds a configurable widget — go_router

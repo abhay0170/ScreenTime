@@ -6,6 +6,7 @@ import '../../domain/models/time_limit.dart';
 import '../local/database.dart';
 import '../services/app_info_resolver.dart';
 import '../services/notification_service.dart';
+import '../services/settings_service.dart';
 import 'usage_repository.dart';
 
 abstract class LimitsRepository {
@@ -21,7 +22,8 @@ abstract class LimitsRepository {
 
   /// For each active limit, compares today's usage against the limit and
   /// fires a notification for any threshold (80%/100%) crossed for the
-  /// first time today.
+  /// first time today. A no-op if the user has turned off threshold
+  /// notifications in Settings.
   ///
   /// Pass [usage] when the caller already fetched today's usage (e.g. the
   /// background task also needs it for the widget update) to avoid
@@ -34,16 +36,19 @@ class LimitsRepositoryImpl implements LimitsRepository {
   final UsageRepository _usageRepository;
   final AppInfoResolver _appInfoResolver;
   final NotificationService _notificationService;
+  final SettingsService _settingsService;
 
   LimitsRepositoryImpl({
     required AppDatabase database,
     required UsageRepository usageRepository,
     required AppInfoResolver appInfoResolver,
     required NotificationService notificationService,
+    required SettingsService settingsService,
   }) : _database = database,
        _usageRepository = usageRepository,
        _appInfoResolver = appInfoResolver,
-       _notificationService = notificationService;
+       _notificationService = notificationService,
+       _settingsService = settingsService;
 
   @override
   Future<List<TimeLimit>> getAllLimits() async {
@@ -125,6 +130,8 @@ class LimitsRepositoryImpl implements LimitsRepository {
 
   @override
   Future<void> checkAndNotifyThresholds({List<AppUsageInfo>? usage}) async {
+    if (!await _settingsService.isThresholdNotificationsEnabled()) return;
+
     final limits = await getAllLimits();
     if (limits.isEmpty) return;
 

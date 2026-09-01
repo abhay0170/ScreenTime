@@ -2,12 +2,14 @@ import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:flutter_app_usage_tracker/data/local/database.dart';
 import 'package:flutter_app_usage_tracker/data/repositories/limits_repository.dart';
 import 'package:flutter_app_usage_tracker/data/repositories/usage_repository.dart';
 import 'package:flutter_app_usage_tracker/data/services/app_info_resolver.dart';
 import 'package:flutter_app_usage_tracker/data/services/notification_service.dart';
+import 'package:flutter_app_usage_tracker/data/services/settings_service.dart';
 import 'package:flutter_app_usage_tracker/domain/models/app_usage_info.dart';
 import 'package:flutter_app_usage_tracker/domain/models/time_limit.dart';
 
@@ -36,6 +38,7 @@ void main() {
   late LimitsRepository repository;
 
   setUp(() async {
+    SharedPreferences.setMockInitialValues({});
     usageRepository = MockUsageRepository();
     notificationService = MockNotificationService();
     database = AppDatabase.forTesting(NativeDatabase.memory());
@@ -44,6 +47,7 @@ void main() {
       usageRepository: usageRepository,
       appInfoResolver: AppInfoResolver(),
       notificationService: notificationService,
+      settingsService: SettingsService(),
     );
 
     when(

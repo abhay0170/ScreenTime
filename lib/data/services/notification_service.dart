@@ -35,9 +35,23 @@ class NotificationService {
   }
 
   /// Requests POST_NOTIFICATIONS on Android 13+. No-op (returns null) on
-  /// versions that don't need it.
+  /// versions that don't need it. Android only shows this prompt once —
+  /// after that it just returns the existing status without asking again,
+  /// which is why Settings checks [areNotificationsEnabled] and links to
+  /// [openAppNotificationSettings] instead of re-prompting.
   Future<bool?> requestPermission() async {
     return await _androidPlugin()?.requestNotificationsPermission();
+  }
+
+  /// Checks (without prompting) whether notifications are currently
+  /// enabled for the app.
+  Future<bool?> areNotificationsEnabled() async {
+    return await _androidPlugin()?.areNotificationsEnabled();
+  }
+
+  /// Opens the OS notification settings screen for this app.
+  Future<bool?> openAppNotificationSettings() async {
+    return await _androidPlugin()?.openAppNotificationSettings();
   }
 
   Future<void> showThresholdNotification({

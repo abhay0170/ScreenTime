@@ -61,13 +61,14 @@ void main() {
       overrides: [
         usageRepositoryProvider.overrideWithValue(repository),
         appDatabaseProvider.overrideWithValue(database),
-        // The Today screen also reads limits (for the near-limit banner)
-        // and triggers a threshold check; both are exercised separately in
-        // the limits/notification tests, so short-circuit them here to
-        // avoid touching the (unmocked, plugin-backed) real notification
-        // service in a widget test.
+        // The Today screen also reads limits (for the near-limit banner),
+        // triggers a threshold check, and syncs the home screen widget;
+        // all three are exercised separately elsewhere, so short-circuit
+        // them here to avoid touching the (unmocked, plugin-backed) real
+        // notification/home_widget services in a widget test.
         allLimitsProvider.overrideWith((ref) async => const []),
         thresholdCheckProvider.overrideWith((ref) async {}),
+        todayOverviewWidgetSyncProvider.overrideWith((ref) async {}),
       ],
       child: MaterialApp(theme: materialFlowTheme, home: const TodayScreen()),
     );

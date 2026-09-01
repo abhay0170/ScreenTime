@@ -1,5 +1,6 @@
 import 'package:drift/drift.dart';
 
+import '../../domain/models/app_usage_info.dart';
 import '../../domain/models/limit_with_usage.dart';
 import '../../domain/models/time_limit.dart';
 import '../local/database.dart';
@@ -21,7 +22,11 @@ abstract class LimitsRepository {
   /// For each active limit, compares today's usage against the limit and
   /// fires a notification for any threshold (80%/100%) crossed for the
   /// first time today.
-  Future<void> checkAndNotifyThresholds();
+  ///
+  /// Pass [usage] when the caller already fetched today's usage (e.g. the
+  /// background task also needs it for the widget update) to avoid
+  /// querying usage_stats twice; otherwise it's fetched internally.
+  Future<void> checkAndNotifyThresholds({List<AppUsageInfo>? usage});
 }
 
 class LimitsRepositoryImpl implements LimitsRepository {
@@ -119,12 +124,14 @@ class LimitsRepositoryImpl implements LimitsRepository {
   }
 
   @override
-  Future<void> checkAndNotifyThresholds() async {
+  Future<void> checkAndNotifyThresholds({List<AppUsageInfo>? usage}) async {
     final limits = await getAllLimits();
     if (limits.isEmpty) return;
 
-    final usage = await _usageRepository.getTodayUsage();
-    final usageByPackage = {for (final app in usage) app.packageName: app};
+    final resolvedUsage = usage ?? await _usageRepository.getTodayUsage();
+    final usageByPackage = {
+      for (final app in resolvedUsage) app.packageName: app,
+    };
     final today = _startOfDay(DateTime.now());
 
     for (final limit in limits) {

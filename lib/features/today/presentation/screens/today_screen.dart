@@ -15,8 +15,10 @@ class TodayScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final usageAsync = ref.watch(todayUsageProvider);
-    // Runs the threshold check whenever usage (re)loads; result is unused.
+    // Runs the threshold check and pushes fresh data to the home screen
+    // widget whenever usage (re)loads; results are unused here.
     ref.watch(thresholdCheckProvider);
+    ref.watch(todayOverviewWidgetSyncProvider);
 
     return Scaffold(
       body: SafeArea(

@@ -8,10 +8,12 @@ import '../../data/repositories/usage_repository.dart';
 import '../../data/services/app_info_resolver.dart';
 import '../../data/services/notification_service.dart';
 import '../../data/services/usage_stats_service.dart';
+import '../../data/services/widget_service.dart';
 import '../../domain/models/app_usage_info.dart';
 import '../../domain/models/daily_total.dart';
 import '../../domain/models/limit_with_usage.dart';
 import '../../domain/models/time_limit.dart';
+import '../utils/duration_formatter.dart';
 
 final appDatabaseProvider = Provider<AppDatabase>((ref) {
   final database = AppDatabase();
@@ -57,6 +59,10 @@ final trendsRepositoryProvider = Provider<TrendsRepository>((ref) {
     database: ref.watch(appDatabaseProvider),
     appInfoResolver: ref.watch(appInfoResolverProvider),
   );
+});
+
+final widgetServiceProvider = Provider<WidgetService>((ref) {
+  return WidgetService();
 });
 
 /// Today's real per-app usage, fetched (and upserted into Drift) on demand.
@@ -107,10 +113,32 @@ final unlimitedTrackedAppsProvider =
 
 /// Runs the threshold check from the UI isolate whenever today's usage is
 /// (re)loaded, so limit feedback feels responsive while actively using the
-/// app rather than waiting on the ~15 minute background cadence.
+/// app rather than waiting on the ~15 minute background cadence. Reuses
+/// the usage already fetched by [todayUsageProvider] instead of querying
+/// usage_stats again.
 final thresholdCheckProvider = FutureProvider.autoDispose<void>((ref) async {
-  await ref.watch(todayUsageProvider.future);
-  await ref.read(limitsRepositoryProvider).checkAndNotifyThresholds();
+  final usage = await ref.watch(todayUsageProvider.future);
+  await ref
+      .read(limitsRepositoryProvider)
+      .checkAndNotifyThresholds(usage: usage);
+});
+
+/// Pushes today's total and top app to the native "Today Overview" home
+/// screen widget whenever usage is (re)loaded, so the widget stays fresh
+/// while the app is open (the background task covers the rest of the
+/// time). Reuses the same usage as [thresholdCheckProvider].
+final todayOverviewWidgetSyncProvider = FutureProvider.autoDispose<void>((
+  ref,
+) async {
+  final usage = await ref.watch(todayUsageProvider.future);
+  final total = usage.fold<Duration>(
+    Duration.zero,
+    (sum, app) => sum + app.totalTime,
+  );
+  final topAppName = usage.isEmpty ? 'No usage yet' : usage.first.appName;
+  await ref
+      .read(widgetServiceProvider)
+      .updateTodayOverviewWidget(formatDuration(total), topAppName);
 });
 
 /// A named recent date range, resolved to `[start, end)` at read time so

@@ -1,11 +1,13 @@
 import 'package:workmanager/workmanager.dart';
 
+import '../../core/utils/duration_formatter.dart';
 import '../local/database.dart';
 import '../repositories/limits_repository.dart';
 import '../repositories/usage_repository.dart';
 import 'app_info_resolver.dart';
 import 'notification_service.dart';
 import 'usage_stats_service.dart';
+import 'widget_service.dart';
 
 const limitsCheckTaskName = 'checkLimitThresholds';
 const _limitsCheckUniqueName = 'checkLimitThresholds-periodic';
@@ -46,7 +48,21 @@ void callbackDispatcher() {
         notificationService: notificationService,
       );
 
-      await limitsRepository.checkAndNotifyThresholds();
+      // Fetched once and reused for both the threshold check and the
+      // widget update, rather than querying usage_stats twice.
+      final usage = await usageRepository.getTodayUsage();
+      await limitsRepository.checkAndNotifyThresholds(usage: usage);
+
+      final total = usage.fold<Duration>(
+        Duration.zero,
+        (sum, app) => sum + app.totalTime,
+      );
+      final topAppName = usage.isEmpty ? 'No usage yet' : usage.first.appName;
+      await WidgetService().updateTodayOverviewWidget(
+        formatDuration(total),
+        topAppName,
+      );
+
       return true;
     } finally {
       await database.close();

@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/di/providers.dart';
 import '../../../../core/theme/app_theme_style.dart';
 import '../../../../core/theme/app_theme_variant.dart';
 import '../../../../core/theme/theme_provider.dart';
+import '../../../../core/utils/duration_formatter.dart';
+import '../../../../domain/models/app_usage_info.dart';
 
 /// Temporary screen to verify the theme system. Replaced by the real
 /// Today screen in a later step.
@@ -15,6 +18,7 @@ class ThemePreviewScreen extends ConsumerWidget {
     final theme = Theme.of(context);
     final style = theme.extension<AppThemeStyle>()!;
     final currentVariant = ref.watch(themeProvider);
+    final usageAsync = ref.watch(todayUsageProvider);
 
     final Color heroTextColor;
     if (style.heroGradient != null) {
@@ -27,7 +31,7 @@ class ThemePreviewScreen extends ConsumerWidget {
 
     return Scaffold(
       body: SafeArea(
-        child: Padding(
+        child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -87,10 +91,62 @@ class ThemePreviewScreen extends ConsumerWidget {
                   ),
                 ],
               ),
+              const SizedBox(height: 32),
+              Text("Today's usage (debug)", style: theme.textTheme.titleSmall),
+              const SizedBox(height: 12),
+              _UsageList(usageAsync: usageAsync),
             ],
           ),
         ),
       ),
+    );
+  }
+}
+
+class _UsageList extends StatelessWidget {
+  final AsyncValue<List<AppUsageInfo>> usageAsync;
+
+  const _UsageList({required this.usageAsync});
+
+  @override
+  Widget build(BuildContext context) {
+    return usageAsync.when(
+      loading: () => const Padding(
+        padding: EdgeInsets.symmetric(vertical: 24),
+        child: Center(child: CircularProgressIndicator()),
+      ),
+      error: (error, stackTrace) => Text('Failed to load usage: $error'),
+      data: (usage) {
+        if (usage.isEmpty) {
+          return const Text('No app usage recorded yet today.');
+        }
+        return Column(
+          children: [
+            for (final app in usage)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 6),
+                child: Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 16,
+                      backgroundImage: app.iconBytes != null
+                          ? MemoryImage(app.iconBytes!)
+                          : null,
+                      child: app.iconBytes == null
+                          ? const Icon(Icons.apps, size: 16)
+                          : null,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(app.appName, overflow: TextOverflow.ellipsis),
+                    ),
+                    Text(formatDuration(app.totalTimeToday)),
+                  ],
+                ),
+              ),
+          ],
+        );
+      },
     );
   }
 }

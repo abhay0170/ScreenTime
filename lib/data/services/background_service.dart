@@ -48,8 +48,8 @@ void callbackDispatcher() {
         notificationService: notificationService,
       );
 
-      // Fetched once and reused for both the threshold check and the
-      // widget update, rather than querying usage_stats twice.
+      // Fetched once and reused for the threshold check and all three
+      // widget updates, rather than querying usage_stats twice.
       final usage = await usageRepository.getTodayUsage();
       await limitsRepository.checkAndNotifyThresholds(usage: usage);
 
@@ -58,10 +58,15 @@ void callbackDispatcher() {
         (sum, app) => sum + app.totalTime,
       );
       final topAppName = usage.isEmpty ? 'No usage yet' : usage.first.appName;
-      await WidgetService().updateTodayOverviewWidget(
+      final widgetService = WidgetService();
+      await widgetService.updateTodayOverviewWidget(
         formatDuration(total),
         topAppName,
       );
+      await widgetService.updateAppUsageWidgets(usage);
+
+      final limits = await limitsRepository.getAllLimits();
+      await widgetService.updateLimitCountdownWidgets(usage, limits);
 
       return true;
     } finally {

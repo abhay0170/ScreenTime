@@ -25,21 +25,35 @@ class WidgetsScreen extends ConsumerWidget {
           const SizedBox(height: 20),
           _TodayOverviewWidgetCard(usage: usageAsync.valueOrNull),
           const SizedBox(height: 16),
-          const _ComingSoonWidgetCard(
+          _ConfigurableWidgetCard(
             title: 'App Usage',
             description: "Track one app's usage right from your home screen.",
             icon: Icons.apps_rounded,
+            onTap: () => showAddWidgetInstructions(context, 'App Usage'),
           ),
           const SizedBox(height: 16),
-          const _ComingSoonWidgetCard(
+          _ConfigurableWidgetCard(
             title: 'Limit Countdown',
             description: 'See how much time is left before you hit a limit.',
             icon: Icons.hourglass_bottom_rounded,
+            onTap: () => showAddWidgetInstructions(context, 'Limit Countdown'),
           ),
         ],
       ),
     );
   }
+}
+
+/// Shows the "how to add this widget" bottom sheet — Android requires
+/// this to be done from the home screen, an app can't place a widget
+/// itself. Shared by all three widget gallery cards.
+void showAddWidgetInstructions(BuildContext context, String widgetName) {
+  showModalBottomSheet(
+    context: context,
+    showDragHandle: true,
+    isScrollControlled: true,
+    builder: (context) => _AddWidgetInstructionsSheet(widgetName: widgetName),
+  );
 }
 
 class _TodayOverviewWidgetCard extends StatelessWidget {
@@ -61,7 +75,7 @@ class _TodayOverviewWidgetCard extends StatelessWidget {
 
     return InkWell(
       borderRadius: BorderRadius.circular(style.cardRadius),
-      onTap: () => _showAddInstructions(context),
+      onTap: () => showAddWidgetInstructions(context, 'Today Overview'),
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
@@ -110,16 +124,6 @@ class _TodayOverviewWidgetCard extends StatelessWidget {
           ],
         ),
       ),
-    );
-  }
-
-  void _showAddInstructions(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      showDragHandle: true,
-      isScrollControlled: true,
-      builder: (context) =>
-          const _AddWidgetInstructionsSheet(widgetName: 'Today Overview'),
     );
   }
 }
@@ -193,15 +197,21 @@ class _TodayOverviewPreview extends StatelessWidget {
   }
 }
 
-class _ComingSoonWidgetCard extends StatelessWidget {
+/// Gallery card for a widget type that needs a configuration step (App
+/// Usage, Limit Countdown) — unlike Today Overview, there's no single
+/// "the" instance to preview since each placed widget has its own
+/// selected app/limit, so this just explains what it does.
+class _ConfigurableWidgetCard extends StatelessWidget {
   final String title;
   final String description;
   final IconData icon;
+  final VoidCallback onTap;
 
-  const _ComingSoonWidgetCard({
+  const _ConfigurableWidgetCard({
     required this.title,
     required this.description,
     required this.icon,
+    required this.onTap,
   });
 
   @override
@@ -209,8 +219,9 @@ class _ComingSoonWidgetCard extends StatelessWidget {
     final theme = Theme.of(context);
     final style = theme.extension<AppThemeStyle>()!;
 
-    return Opacity(
-      opacity: 0.6,
+    return InkWell(
+      borderRadius: BorderRadius.circular(style.cardRadius),
+      onTap: onTap,
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
@@ -234,7 +245,7 @@ class _ComingSoonWidgetCard extends StatelessWidget {
             ),
             const SizedBox(width: 8),
             _Badge(
-              label: 'COMING SOON',
+              label: 'SETUP REQUIRED',
               color: theme.colorScheme.onSurfaceVariant,
             ),
           ],

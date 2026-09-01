@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- RemoteViews layout for the "Limit Countdown" home screen widget. The
+     Chronometer ticks live via Android's own widget host process, using
+     the base time the provider computes on each update — no further
+     app-side updates are needed for the ticking itself. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_container"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@drawable/widget_card_background"
+    android:padding="16dp">
+
+    <TextView
+        android:id="@+id/widget_limit_app_name"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Syncing…"
+        android:textColor="#C7C7CC"
+        android:textSize="12sp"
+        android:maxLines="1"
+        android:ellipsize="end" />
+
+    <Chronometer
+        android:id="@+id/widget_countdown"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:textColor="#FFFFFF"
+        android:textSize="28sp"
+        android:textStyle="bold"
+        android:fontFamily="sans-serif"
+        android:format="%s" />
+
+    <TextView
+        android:id="@+id/widget_limit_fallback"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:textColor="#FFFFFF"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:visibility="gone" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:text="REMAINING TODAY"
+        android:textColor="#9A9AA2"
+        android:textSize="11sp"
+        android:textStyle="bold"
+        android:fontFamily="sans-serif-medium" />
+</LinearLayout>

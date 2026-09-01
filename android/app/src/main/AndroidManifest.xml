@@ -46,6 +46,51 @@
                 android:name="android.appwidget.provider"
                 android:resource="@xml/today_overview_widget_info" />
         </receiver>
+
+        <receiver
+            android:name=".widgets.AppUsageWidgetProvider"
+            android:exported="true"
+            android:label="App Usage">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/app_usage_widget_info" />
+        </receiver>
+
+        <receiver
+            android:name=".widgets.LimitCountdownWidgetProvider"
+            android:exported="true"
+            android:label="Limit Countdown">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/limit_countdown_widget_info" />
+        </receiver>
+
+        <!-- Launched by Android before placing a configurable widget (see
+             android:configure in the matching widget_info.xml). Shows a
+             Flutter config screen; see BaseWidgetConfigActivity. -->
+        <activity
+            android:name=".widgets.AppUsageWidgetConfigActivity"
+            android:exported="true"
+            android:theme="@style/LaunchTheme">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_CONFIGURE" />
+            </intent-filter>
+        </activity>
+
+        <activity
+            android:name=".widgets.LimitCountdownWidgetConfigActivity"
+            android:exported="true"
+            android:theme="@style/LaunchTheme">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_CONFIGURE" />
+            </intent-filter>
+        </activity>
     </application>
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility and

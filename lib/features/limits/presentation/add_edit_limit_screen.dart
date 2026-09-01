@@ -103,6 +103,7 @@ class _AddEditLimitScreenState extends ConsumerState<AddEditLimitScreen> {
     ref.invalidate(allLimitsProvider);
     ref.invalidate(limitsWithUsageProvider);
     ref.invalidate(unlimitedTrackedAppsProvider);
+    await _syncLimitCountdownWidgets();
 
     if (mounted) context.pop();
   }
@@ -116,8 +117,20 @@ class _AddEditLimitScreenState extends ConsumerState<AddEditLimitScreen> {
     ref.invalidate(allLimitsProvider);
     ref.invalidate(limitsWithUsageProvider);
     ref.invalidate(unlimitedTrackedAppsProvider);
+    await _syncLimitCountdownWidgets();
 
     if (mounted) context.pop();
+  }
+
+  /// Pushes a fresh countdown to any placed Limit Countdown widget right
+  /// away, rather than waiting for the next usage refresh — a no-op
+  /// (cheap) call when no such widget is placed.
+  Future<void> _syncLimitCountdownWidgets() async {
+    final usage = await ref.read(usageRepositoryProvider).getTodayUsage();
+    final limits = await ref.read(limitsRepositoryProvider).getAllLimits();
+    await ref
+        .read(widgetServiceProvider)
+        .updateLimitCountdownWidgets(usage, limits);
   }
 
   @override

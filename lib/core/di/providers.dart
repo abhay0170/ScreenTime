@@ -8,6 +8,7 @@ import '../../data/repositories/usage_repository.dart';
 import '../../data/services/app_info_resolver.dart';
 import '../../data/services/notification_service.dart';
 import '../../data/services/usage_stats_service.dart';
+import '../../data/services/widget_config_service.dart';
 import '../../data/services/widget_service.dart';
 import '../../domain/models/app_usage_info.dart';
 import '../../domain/models/daily_total.dart';
@@ -61,8 +62,12 @@ final trendsRepositoryProvider = Provider<TrendsRepository>((ref) {
   );
 });
 
+final widgetConfigServiceProvider = Provider<WidgetConfigService>((ref) {
+  return WidgetConfigService();
+});
+
 final widgetServiceProvider = Provider<WidgetService>((ref) {
-  return WidgetService();
+  return WidgetService(configService: ref.watch(widgetConfigServiceProvider));
 });
 
 /// Today's real per-app usage, fetched (and upserted into Drift) on demand.
@@ -139,6 +144,30 @@ final todayOverviewWidgetSyncProvider = FutureProvider.autoDispose<void>((
   await ref
       .read(widgetServiceProvider)
       .updateTodayOverviewWidget(formatDuration(total), topAppName);
+});
+
+/// Refreshes every placed App Usage widget instance whenever usage is
+/// (re)loaded. A no-op (cheap) call when no such widget is placed.
+final appUsageWidgetSyncProvider = FutureProvider.autoDispose<void>((
+  ref,
+) async {
+  final usage = await ref.watch(todayUsageProvider.future);
+  await ref.read(widgetServiceProvider).updateAppUsageWidgets(usage);
+});
+
+/// Refreshes every placed Limit Countdown widget instance whenever usage
+/// or limits are (re)loaded. A no-op (cheap) call when no such widget is
+/// placed. Also called directly from add_edit_limit_screen.dart when the
+/// user edits a limit, so the countdown updates immediately rather than
+/// waiting for the next usage refresh.
+final limitCountdownWidgetSyncProvider = FutureProvider.autoDispose<void>((
+  ref,
+) async {
+  final usage = await ref.watch(todayUsageProvider.future);
+  final limits = await ref.watch(allLimitsProvider.future);
+  await ref
+      .read(widgetServiceProvider)
+      .updateLimitCountdownWidgets(usage, limits);
 });
 
 /// A named recent date range, resolved to `[start, end)` at read time so

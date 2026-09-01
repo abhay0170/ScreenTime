@@ -8,6 +8,7 @@ import '../../features/limits/presentation/limits_screen.dart';
 import '../../features/onboarding/presentation/onboarding_permission_screen.dart';
 import '../../features/today/presentation/screens/today_screen.dart';
 import '../../features/trends/presentation/trends_screen.dart';
+import '../../features/widgets/presentation/widget_config_screen.dart';
 import '../../features/widgets/presentation/widgets_screen.dart';
 import '../di/providers.dart';
 import 'themed_bottom_nav_bar.dart';
@@ -50,6 +51,19 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         path: '/app-detail/:packageName',
         builder: (context, state) =>
             AppDetailScreen(packageName: state.pathParameters['packageName']!),
+      ),
+      // The initial route for the fresh engine BaseWidgetConfigActivity
+      // spawns when the user adds a configurable widget — go_router
+      // honors the platform's initial route over `initialLocation` above
+      // whenever it isn't "/", so this is reached directly on launch.
+      GoRoute(
+        path: '/widget-config',
+        builder: (context, state) {
+          final mode = state.uri.queryParameters['mode'] ?? modeAppUsage;
+          final appWidgetId =
+              int.tryParse(state.uri.queryParameters['appWidgetId'] ?? '') ?? 0;
+          return WidgetConfigScreen(mode: mode, appWidgetId: appWidgetId);
+        },
       ),
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) {

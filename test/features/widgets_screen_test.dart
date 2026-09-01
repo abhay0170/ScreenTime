@@ -41,21 +41,18 @@ void main() {
     );
   }
 
-  testWidgets(
-    'shows a live Today Overview preview, a NO SETUP badge, and Coming '
-    'soon cards',
-    (tester) async {
-      await tester.pumpWidget(buildSubject());
-      await tester.pumpAndSettle();
+  testWidgets('shows a live Today Overview preview, a NO SETUP badge, and '
+      'SETUP REQUIRED cards for App Usage / Limit Countdown', (tester) async {
+    await tester.pumpWidget(buildSubject());
+    await tester.pumpAndSettle();
 
-      expect(find.text('1h 35m'), findsOneWidget); // 1h15m + 20m
-      expect(find.text('Chatter'), findsOneWidget);
-      expect(find.text('NO SETUP'), findsOneWidget);
-      expect(find.text('App Usage'), findsOneWidget);
-      expect(find.text('Limit Countdown'), findsOneWidget);
-      expect(find.text('COMING SOON'), findsNWidgets(2));
-    },
-  );
+    expect(find.text('1h 35m'), findsOneWidget); // 1h15m + 20m
+    expect(find.text('Chatter'), findsOneWidget);
+    expect(find.text('NO SETUP'), findsOneWidget);
+    expect(find.text('App Usage'), findsOneWidget);
+    expect(find.text('Limit Countdown'), findsOneWidget);
+    expect(find.text('SETUP REQUIRED'), findsNWidgets(2));
+  });
 
   testWidgets('tapping the Today Overview card shows setup instructions', (
     tester,
@@ -67,6 +64,20 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.textContaining('Long-press your home screen'), findsOneWidget);
+    expect(find.textContaining('Today Overview'), findsWidgets);
     expect(find.text('Got it'), findsOneWidget);
+  });
+
+  testWidgets('tapping the App Usage card shows setup instructions', (
+    tester,
+  ) async {
+    await tester.pumpWidget(buildSubject());
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('App Usage'));
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('Long-press your home screen'), findsOneWidget);
+    expect(find.text('Add the App Usage widget'), findsOneWidget);
   });
 }

@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/di/providers.dart';
 import '../../../core/utils/duration_formatter.dart';
 import '../../../core/widgets/app_icon.dart';
+import '../../../core/widgets/async_state_views.dart';
 import '../../../domain/models/limit_with_usage.dart';
 
 const modeAppUsage = 'app_usage';
@@ -30,19 +31,31 @@ class WidgetConfigScreen extends ConsumerStatefulWidget {
 
 class _WidgetConfigScreenState extends ConsumerState<WidgetConfigScreen> {
   bool _completing = false;
+  Object? _saveError;
 
   Future<void> _select(String packageName) async {
     if (_completing) return;
-    setState(() => _completing = true);
+    setState(() {
+      _completing = true;
+      _saveError = null;
+    });
 
-    // Hands control back to native code, which finishes this activity —
-    // there's nothing further to do here once this returns.
-    await ref
-        .read(widgetConfigServiceProvider)
-        .completeConfiguration(
-          appWidgetId: widget.appWidgetId,
-          selectedValue: packageName,
-        );
+    try {
+      // Hands control back to native code, which finishes this activity —
+      // there's nothing further to do here once this succeeds.
+      await ref
+          .read(widgetConfigServiceProvider)
+          .completeConfiguration(
+            appWidgetId: widget.appWidgetId,
+            selectedValue: packageName,
+          );
+    } catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _completing = false;
+        _saveError = error;
+      });
+    }
   }
 
   @override
@@ -57,9 +70,64 @@ class _WidgetConfigScreenState extends ConsumerState<WidgetConfigScreen> {
       appBar: AppBar(
         title: Text(isAppUsage ? 'App Usage widget' : 'Limit Countdown widget'),
       ),
-      body: isAppUsage
-          ? _AppUsagePicker(onSelected: _select)
-          : _LimitCountdownPicker(onSelected: _select),
+      body: Column(
+        children: [
+          if (_saveError != null)
+            _SaveErrorBanner(
+              onDismiss: () => setState(() => _saveError = null),
+            ),
+          Expanded(
+            child: isAppUsage
+                ? _AppUsagePicker(onSelected: _select)
+                : _LimitCountdownPicker(onSelected: _select),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Shown when [WidgetConfigService.completeConfiguration] throws (e.g. a
+/// MethodChannel error) — without this, a failed save would leave the
+/// picker sitting there with no indication anything went wrong, and
+/// Android would never finish placing the widget.
+class _SaveErrorBanner extends StatelessWidget {
+  final VoidCallback onDismiss;
+
+  const _SaveErrorBanner({required this.onDismiss});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Container(
+      width: double.infinity,
+      color: theme.colorScheme.errorContainer,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: Row(
+        children: [
+          Icon(
+            Icons.error_outline_rounded,
+            color: theme.colorScheme.onErrorContainer,
+            size: 20,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              "Couldn't save the widget setup. Try selecting the app again.",
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onErrorContainer,
+              ),
+            ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.close_rounded, size: 18),
+            tooltip: 'Dismiss',
+            color: theme.colorScheme.onErrorContainer,
+            onPressed: onDismiss,
+          ),
+        ],
+      ),
     );
   }
 }
@@ -76,8 +144,11 @@ class _AppUsagePicker extends ConsumerWidget {
 
     return usageAsync.when(
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (error, stackTrace) =>
-          Center(child: Text('Failed to load apps: $error')),
+      error: (error, stackTrace) => Center(
+        child: AsyncErrorView(
+          onRetry: () => ref.invalidate(todayUsageProvider),
+        ),
+      ),
       data: (apps) {
         if (apps.isEmpty) {
           return Center(
@@ -124,8 +195,11 @@ class _LimitCountdownPicker extends ConsumerWidget {
 
     return limitsAsync.when(
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (error, stackTrace) =>
-          Center(child: Text('Failed to load limits: $error')),
+      error: (error, stackTrace) => Center(
+        child: AsyncErrorView(
+          onRetry: () => ref.invalidate(limitsWithUsageProvider),
+        ),
+      ),
       data: (limits) {
         if (limits.isEmpty) {
           return Center(

@@ -9,6 +9,7 @@ import '../../../core/di/providers.dart';
 import '../../../core/theme/app_theme_style.dart';
 import '../../../core/utils/duration_formatter.dart';
 import '../../../core/widgets/app_icon.dart';
+import '../../../core/widgets/async_state_views.dart';
 import '../../../domain/models/app_usage_info.dart';
 import '../../../domain/models/time_limit.dart';
 import '../../trends/presentation/charts/daily_totals_bar_chart.dart';
@@ -109,19 +110,41 @@ class _TodayUsageSection extends ConsumerWidget {
     final usageAsync = ref.watch(todayUsageProvider);
     final theme = Theme.of(context);
 
-    final duration = usageAsync.maybeWhen(
-      data: (usage) => _findDuration(usage, packageName),
-      orElse: () => null,
-    );
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text("Today's usage", style: theme.textTheme.titleSmall),
         const SizedBox(height: 8),
-        Text(
-          duration == null ? '—' : formatDuration(duration),
-          style: theme.textTheme.headlineMedium,
+        usageAsync.when(
+          loading: () => const SkeletonBox(width: 120, height: 32, radius: 6),
+          error: (error, stackTrace) => Row(
+            children: [
+              Icon(
+                Icons.error_outline_rounded,
+                size: 18,
+                color: theme.colorScheme.error,
+              ),
+              const SizedBox(width: 6),
+              Text(
+                'Failed to load',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: theme.colorScheme.error,
+                ),
+              ),
+              const SizedBox(width: 8),
+              TextButton(
+                onPressed: () => ref.invalidate(todayUsageProvider),
+                child: const Text('Retry'),
+              ),
+            ],
+          ),
+          data: (usage) {
+            final duration = _findDuration(usage, packageName);
+            return Text(
+              duration == null ? '—' : formatDuration(duration),
+              style: theme.textTheme.headlineMedium,
+            );
+          },
         ),
       ],
     );
@@ -139,13 +162,14 @@ class _WeekChartSection extends ConsumerWidget {
 
     return chartAsync.when(
       data: (data) => DailyTotalsBarChart(data: data),
-      loading: () => const SizedBox(
-        height: 180,
-        child: Center(child: CircularProgressIndicator()),
-      ),
+      loading: () => const SkeletonBox(height: 180, radius: 20),
       error: (error, stackTrace) => SizedBox(
         height: 180,
-        child: Center(child: Text('Failed to load: $error')),
+        child: AsyncErrorView(
+          compact: true,
+          onRetry: () =>
+              ref.invalidate(appDetailDailyTotalsProvider(packageName)),
+        ),
       ),
     );
   }
@@ -167,8 +191,11 @@ class _LimitSection extends ConsumerWidget {
     );
 
     return limitAsync.when(
-      loading: () => const SizedBox.shrink(),
-      error: (error, stackTrace) => const SizedBox.shrink(),
+      loading: () => const SkeletonBox(height: 96, radius: 16),
+      error: (error, stackTrace) => AsyncErrorView(
+        compact: true,
+        onRetry: () => ref.invalidate(limitForPackageProvider(packageName)),
+      ),
       data: (limit) => limit == null
           ? _AddLimitPrompt(packageName: packageName)
           : _LimitStatusCard(limit: limit, usedToday: usedToday),

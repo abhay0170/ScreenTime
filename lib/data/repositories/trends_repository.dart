@@ -28,6 +28,12 @@ abstract class TrendsRepository {
     DateTime start,
     DateTime end,
   );
+
+  /// The earliest date any usage was ever recorded, or null if there's no
+  /// history at all yet. Lets the Trends screen tell "no usage in this
+  /// range" apart from "not enough history to fill this range yet" (e.g.
+  /// a week view a few days after install).
+  Future<DateTime?> getEarliestRecordedDate();
 }
 
 class TrendsRepositoryImpl implements TrendsRepository {
@@ -138,6 +144,17 @@ class TrendsRepositoryImpl implements TrendsRepository {
       );
     }
     return result;
+  }
+
+  @override
+  Future<DateTime?> getEarliestRecordedDate() async {
+    final records = _database.appUsageRecords;
+    final earliestDate = records.date.min();
+
+    final query = _database.selectOnly(records)..addColumns([earliestDate]);
+    final row = await query.getSingleOrNull();
+    final value = row?.read(earliestDate);
+    return value == null ? null : _dateOnly(value);
   }
 
   static DateTime _dateOnly(DateTime dateTime) {

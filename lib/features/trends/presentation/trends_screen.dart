@@ -3,7 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/di/providers.dart';
+import '../../../core/theme/app_theme_style.dart';
 import '../../../core/widgets/app_usage_row.dart';
+import '../../../core/widgets/async_state_views.dart';
 import '../../../domain/models/app_usage_info.dart';
 import 'charts/daily_totals_bar_chart.dart';
 
@@ -22,6 +24,11 @@ class _TrendsScreenState extends ConsumerState<TrendsScreen> {
     final theme = Theme.of(context);
     final dailyTotalsAsync = ref.watch(dailyTotalsProvider(_range));
     final topAppsAsync = ref.watch(topAppsForRangeProvider(_range));
+    final earliestAsync = ref.watch(earliestRecordedDateProvider);
+
+    final (rangeStart, _) = _range.resolve();
+    final earliest = earliestAsync.valueOrNull;
+    final hasLimitedHistory = earliest != null && earliest.isAfter(rangeStart);
 
     return Scaffold(
       appBar: AppBar(title: const Text('Trends')),
@@ -29,7 +36,11 @@ class _TrendsScreenState extends ConsumerState<TrendsScreen> {
         onRefresh: () async {
           ref.invalidate(dailyTotalsProvider(_range));
           ref.invalidate(topAppsForRangeProvider(_range));
-          await ref.read(dailyTotalsProvider(_range).future);
+          try {
+            await ref.read(dailyTotalsProvider(_range).future);
+          } catch (_) {
+            // Surfaced via the AsyncValue.error branch below already.
+          }
         },
         child: ListView(
           physics: const AlwaysScrollableScrollPhysics(),
@@ -40,15 +51,22 @@ class _TrendsScreenState extends ConsumerState<TrendsScreen> {
               onChanged: (range) => setState(() => _range = range),
             ),
             const SizedBox(height: 20),
+            if (hasLimitedHistory) ...[
+              _LimitedHistoryBanner(
+                daysAvailable: DateTime.now().difference(earliest).inDays + 1,
+                rangeDays: _range.days,
+              ),
+              const SizedBox(height: 12),
+            ],
             dailyTotalsAsync.when(
               data: (data) => DailyTotalsBarChart(data: data),
-              loading: () => const SizedBox(
-                height: 180,
-                child: Center(child: CircularProgressIndicator()),
-              ),
+              loading: () => const SkeletonBox(height: 180, radius: 20),
               error: (error, stackTrace) => SizedBox(
                 height: 180,
-                child: Center(child: Text('Failed to load: $error')),
+                child: AsyncErrorView(
+                  compact: true,
+                  onRetry: () => ref.invalidate(dailyTotalsProvider(_range)),
+                ),
               ),
             ),
             const SizedBox(height: 24),
@@ -57,13 +75,71 @@ class _TrendsScreenState extends ConsumerState<TrendsScreen> {
             topAppsAsync.when(
               data: (apps) => _RankedAppsList(apps: apps),
               loading: () => const Padding(
-                padding: EdgeInsets.symmetric(vertical: 24),
-                child: Center(child: CircularProgressIndicator()),
+                padding: EdgeInsets.symmetric(vertical: 12),
+                child: Column(
+                  children: [
+                    SkeletonBox(height: 48, radius: 12),
+                    SizedBox(height: 12),
+                    SkeletonBox(height: 48, radius: 12),
+                    SizedBox(height: 12),
+                    SkeletonBox(height: 48, radius: 12),
+                  ],
+                ),
               ),
-              error: (error, stackTrace) => Text('Failed to load: $error'),
+              error: (error, stackTrace) => AsyncErrorView(
+                compact: true,
+                onRetry: () => ref.invalidate(topAppsForRangeProvider(_range)),
+              ),
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// Shown above the chart when there's genuine usage history, but not
+/// enough of it yet to fill the selected range (e.g. a Weekly view a
+/// couple of days after install) — distinct from the chart's own "no
+/// usage at all" empty state.
+class _LimitedHistoryBanner extends StatelessWidget {
+  final int daysAvailable;
+  final int rangeDays;
+
+  const _LimitedHistoryBanner({
+    required this.daysAvailable,
+    required this.rangeDays,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final style = theme.extension<AppThemeStyle>()!;
+    final shownDays = daysAvailable.clamp(1, rangeDays);
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.4),
+        borderRadius: BorderRadius.circular(style.cardRadius / 1.5),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(
+            Icons.info_outline_rounded,
+            size: 18,
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              'Showing $shownDays of $rangeDays days — more history will '
+              'fill in as you keep using ScreenTime.',
+              style: theme.textTheme.bodySmall,
+            ),
+          ),
+        ],
       ),
     );
   }

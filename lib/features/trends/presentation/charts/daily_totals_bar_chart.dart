@@ -126,7 +126,14 @@ class _EmptyChart extends StatelessWidget {
         color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.4),
         borderRadius: BorderRadius.circular(cardRadius),
       ),
-      child: Text('No usage data yet', style: theme.textTheme.bodyMedium),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 24),
+        child: Text(
+          'No usage recorded in this range yet',
+          style: theme.textTheme.bodyMedium,
+          textAlign: TextAlign.center,
+        ),
+      ),
     );
   }
 }

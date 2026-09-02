@@ -63,6 +63,33 @@ dev_dependencies:
   drift_dev: ^2.34.0
   build_runner: ^2.15.1
   mocktail: ^1.0.5
+  flutter_launcher_icons: ^0.14.4
+  flutter_native_splash: ^2.4.7
+
+# Placeholder app icon/splash art (a clock-ring motif in the Material Flow
+# accent purple) — swap assets/icon/*.png for real branding once the app
+# name is finalized, then re-run:
+#   dart run flutter_launcher_icons
+#   dart run flutter_native_splash:create
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/icon/icon.png"
+  remove_alpha_ios: true
+  adaptive_icon_background: "#F4F2FB"
+  adaptive_icon_foreground: "assets/icon/icon_foreground.png"
+  min_sdk_android: 21
+
+flutter_native_splash:
+  color: "#F4F2FB"
+  image: assets/icon/splash_icon.png
+  color_dark: "#17171B"
+  image_dark: assets/icon/splash_icon_dark.png
+  android_12:
+    image: assets/icon/splash_icon.png
+    icon_background_color: "#F4F2FB"
+    image_dark: assets/icon/splash_icon_dark.png
+    icon_background_color_dark: "#17171B"
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -75,10 +102,8 @@ flutter:
   # the material Icons class.
   uses-material-design: true
 
-  # To add assets to your application, add an assets section, like this:
-  # assets:
-  #   - images/a_dot_burr.jpeg
-  #   - images/a_dot_ham.jpeg
+  assets:
+    - assets/icon/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

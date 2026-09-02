@@ -233,7 +233,7 @@ class _NotificationsSection extends ConsumerWidget {
               .read(notificationPreferenceProvider.notifier)
               .setEnabled(value),
         ),
-        osEnabledAsync.maybeWhen(
+        osEnabledAsync.when(
           data: (osEnabled) => osEnabled
               ? const SizedBox.shrink()
               : _WarningRow(
@@ -245,7 +245,12 @@ class _NotificationsSection extends ConsumerWidget {
                       .read(notificationServiceProvider)
                       .openAppNotificationSettings(),
                 ),
-          orElse: () => const SizedBox.shrink(),
+          loading: () => const SizedBox.shrink(),
+          error: (error, stackTrace) => _WarningRow(
+            message: "Couldn't check notification permission status.",
+            actionLabel: 'Retry',
+            onTap: () => ref.invalidate(notificationPermissionEnabledProvider),
+          ),
         ),
       ],
     );

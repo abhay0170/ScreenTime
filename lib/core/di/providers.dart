@@ -212,6 +212,14 @@ final topAppsForRangeProvider = FutureProvider.autoDispose
       return ref.watch(trendsRepositoryProvider).getTopAppsForRange(start, end);
     });
 
+/// The earliest date any usage was recorded, for Trends' "not enough
+/// history yet" notice.
+final earliestRecordedDateProvider = FutureProvider.autoDispose<DateTime?>((
+  ref,
+) {
+  return ref.watch(trendsRepositoryProvider).getEarliestRecordedDate();
+});
+
 /// The last 7 days of usage for one app, for App Detail's chart.
 final appDetailDailyTotalsProvider = FutureProvider.autoDispose
     .family<List<DailyTotal>, String>((ref, packageName) {

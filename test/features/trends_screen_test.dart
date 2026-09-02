@@ -36,6 +36,9 @@ void main() {
     when(
       () => repository.getDailyTotals(any(), any()),
     ).thenAnswer((_) async => dailyTotals);
+    when(
+      () => repository.getEarliestRecordedDate(),
+    ).thenAnswer((_) async => startOfToday.subtract(const Duration(days: 6)));
     when(() => repository.getTopAppsForRange(any(), any())).thenAnswer(
       (_) async => const [
         AppUsageInfo(

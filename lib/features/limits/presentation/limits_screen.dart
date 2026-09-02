@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/di/providers.dart';
 import '../../../core/utils/duration_formatter.dart';
 import '../../../core/widgets/app_icon.dart';
+import '../../../core/widgets/async_state_views.dart';
 import '../../../domain/models/app_usage_info.dart';
 import '../../../domain/models/limit_with_usage.dart';
 
@@ -16,13 +17,30 @@ class LimitsScreen extends ConsumerWidget {
     final limitsAsync = ref.watch(limitsWithUsageProvider);
     final usageAsync = ref.watch(todayUsageProvider);
 
+    void retry() {
+      ref.invalidate(limitsWithUsageProvider);
+      ref.invalidate(todayUsageProvider);
+    }
+
     Widget body;
     if (limitsAsync.isLoading || usageAsync.isLoading) {
-      body = const Center(child: CircularProgressIndicator());
-    } else if (limitsAsync.hasError) {
-      body = _ErrorMessage(message: '${limitsAsync.error}');
-    } else if (usageAsync.hasError) {
-      body = _ErrorMessage(message: '${usageAsync.error}');
+      body = ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.all(20),
+        children: const [
+          SkeletonBox(height: 64, radius: 16),
+          SizedBox(height: 12),
+          SkeletonBox(height: 64, radius: 16),
+          SizedBox(height: 12),
+          SkeletonBox(height: 64, radius: 16),
+        ],
+      );
+    } else if (limitsAsync.hasError || usageAsync.hasError) {
+      body = ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.all(20),
+        children: [AsyncErrorView(onRetry: retry)],
+      );
     } else {
       body = _LimitsBody(
         limitsWithUsage: limitsAsync.requireValue,
@@ -43,30 +61,15 @@ class LimitsScreen extends ConsumerWidget {
       ),
       body: RefreshIndicator(
         onRefresh: () async {
-          ref.invalidate(limitsWithUsageProvider);
-          ref.invalidate(todayUsageProvider);
-          await ref.read(limitsWithUsageProvider.future);
+          retry();
+          try {
+            await ref.read(limitsWithUsageProvider.future);
+          } catch (_) {
+            // Surfaced via the error branch above already.
+          }
         },
         child: body,
       ),
-    );
-  }
-}
-
-class _ErrorMessage extends StatelessWidget {
-  final String message;
-
-  const _ErrorMessage({required this.message});
-
-  @override
-  Widget build(BuildContext context) {
-    return ListView(
-      physics: const AlwaysScrollableScrollPhysics(),
-      padding: const EdgeInsets.all(20),
-      children: [
-        const SizedBox(height: 48),
-        Center(child: Text('Something went wrong: $message')),
-      ],
     );
   }
 }
@@ -90,7 +93,7 @@ class _LimitsBody extends StatelessWidget {
     if (limitsWithUsage.isEmpty && otherApps.isEmpty) {
       return ListView(
         physics: const AlwaysScrollableScrollPhysics(),
-        children: const [SizedBox(height: 80), _EmptyLimitsState()],
+        children: [const SizedBox(height: 80), _EmptyLimitsState()],
       );
     }
 
@@ -119,32 +122,14 @@ class _EmptyLimitsState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 32),
-      child: Column(
-        children: [
-          Icon(
-            Icons.timer_outlined,
-            size: 48,
-            color: theme.colorScheme.onSurfaceVariant,
-          ),
-          const SizedBox(height: 16),
-          Text(
-            'No limits set yet',
-            style: theme.textTheme.titleMedium,
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Once you use a few apps today, you can set a daily limit for '
-            'any of them here.',
-            style: theme.textTheme.bodyMedium,
-            textAlign: TextAlign.center,
-          ),
-        ],
-      ),
+    return EmptyStateCard(
+      icon: Icons.timer_outlined,
+      title: 'No limits set yet',
+      body:
+          'Once you use a few apps today, you can set a daily limit for '
+          'any of them here.',
+      actionLabel: 'Add a limit',
+      onAction: () => context.push('/limits/add'),
     );
   }
 }

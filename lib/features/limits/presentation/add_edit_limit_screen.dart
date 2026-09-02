@@ -87,18 +87,25 @@ class _AddEditLimitScreenState extends ConsumerState<AddEditLimitScreen> {
     setState(() => _saving = true);
     final now = DateTime.now();
 
-    await ref
-        .read(limitsRepositoryProvider)
-        .upsertLimit(
-          TimeLimit(
-            packageName: packageName,
-            dailyLimitMinutes: _hours * 60 + _minutes,
-            notifyAt80: _notifyAt80,
-            notifyAt100: _notifyAt100,
-            createdAt: _existingLimit?.createdAt ?? now,
-            updatedAt: now,
-          ),
-        );
+    try {
+      await ref
+          .read(limitsRepositoryProvider)
+          .upsertLimit(
+            TimeLimit(
+              packageName: packageName,
+              dailyLimitMinutes: _hours * 60 + _minutes,
+              notifyAt80: _notifyAt80,
+              notifyAt100: _notifyAt100,
+              createdAt: _existingLimit?.createdAt ?? now,
+              updatedAt: now,
+            ),
+          );
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _saving = false);
+      _showSaveError("Couldn't save this limit. Please try again.");
+      return;
+    }
 
     ref.invalidate(allLimitsProvider);
     ref.invalidate(limitsWithUsageProvider);
@@ -112,7 +119,13 @@ class _AddEditLimitScreenState extends ConsumerState<AddEditLimitScreen> {
     final packageName = widget.packageName;
     if (packageName == null) return;
 
-    await ref.read(limitsRepositoryProvider).deleteLimit(packageName);
+    try {
+      await ref.read(limitsRepositoryProvider).deleteLimit(packageName);
+    } catch (_) {
+      if (!mounted) return;
+      _showSaveError("Couldn't remove this limit. Please try again.");
+      return;
+    }
 
     ref.invalidate(allLimitsProvider);
     ref.invalidate(limitsWithUsageProvider);
@@ -122,15 +135,28 @@ class _AddEditLimitScreenState extends ConsumerState<AddEditLimitScreen> {
     if (mounted) context.pop();
   }
 
+  void _showSaveError(String message) {
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
+  }
+
   /// Pushes a fresh countdown to any placed Limit Countdown widget right
   /// away, rather than waiting for the next usage refresh — a no-op
-  /// (cheap) call when no such widget is placed.
+  /// (cheap) call when no such widget is placed. Best-effort: the limit
+  /// itself already saved successfully by the time this runs, so a
+  /// failure here (e.g. a MethodChannel error) shouldn't block navigating
+  /// back or be reported as a save failure.
   Future<void> _syncLimitCountdownWidgets() async {
-    final usage = await ref.read(usageRepositoryProvider).getTodayUsage();
-    final limits = await ref.read(limitsRepositoryProvider).getAllLimits();
-    await ref
-        .read(widgetServiceProvider)
-        .updateLimitCountdownWidgets(usage, limits);
+    try {
+      final usage = await ref.read(usageRepositoryProvider).getTodayUsage();
+      final limits = await ref.read(limitsRepositoryProvider).getAllLimits();
+      await ref
+          .read(widgetServiceProvider)
+          .updateLimitCountdownWidgets(usage, limits);
+    } catch (_) {
+      // Best-effort widget refresh only; ignored.
+    }
   }
 
   @override
@@ -339,6 +365,7 @@ class _Stepper extends StatelessWidget {
           children: [
             IconButton(
               icon: const Icon(Icons.remove_circle_outline),
+              tooltip: 'Decrease $label',
               onPressed: value <= 0
                   ? null
                   : () => onChanged((value - step).clamp(0, max)),
@@ -353,6 +380,7 @@ class _Stepper extends StatelessWidget {
             ),
             IconButton(
               icon: const Icon(Icons.add_circle_outline),
+              tooltip: 'Increase $label',
               onPressed: value >= max
                   ? null
                   : () => onChanged((value + step).clamp(0, max)),

@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/di/providers.dart';
 import '../../../../core/utils/date_formatter.dart';
+import '../../../../core/widgets/async_state_views.dart';
 import '../../../../domain/models/app_usage_info.dart';
 import '../../controller/near_limit_finder.dart';
 import '../widgets/today_hero_section.dart';
@@ -30,7 +31,11 @@ class TodayScreen extends ConsumerWidget {
             ref.invalidate(todayUsageProvider);
             ref.invalidate(yesterdayTotalProvider);
             ref.invalidate(allLimitsProvider);
-            await ref.read(todayUsageProvider.future);
+            try {
+              await ref.read(todayUsageProvider.future);
+            } catch (_) {
+              // Surfaced via the AsyncValue.error branch below already.
+            }
           },
           child: usageAsync.when(
             data: (usage) => ListView(
@@ -40,7 +45,9 @@ class TodayScreen extends ConsumerWidget {
                 const _TodayHeader(),
                 const SizedBox(height: 24),
                 if (usage.isEmpty)
-                  const _EmptyUsageState()
+                  _EmptyUsageState(
+                    onRefresh: () => ref.invalidate(todayUsageProvider),
+                  )
                 else
                   _TodayBody(usage: usage),
               ],
@@ -57,8 +64,9 @@ class TodayScreen extends ConsumerWidget {
               padding: const EdgeInsets.all(20),
               children: [
                 const _TodayHeader(),
-                const SizedBox(height: 48),
-                Center(child: Text('Something went wrong: $error')),
+                AsyncErrorView(
+                  onRetry: () => ref.invalidate(todayUsageProvider),
+                ),
               ],
             ),
           ),
@@ -96,6 +104,7 @@ class _TodayHeader extends StatelessWidget {
         ),
         IconButton(
           icon: const Icon(Icons.settings_outlined),
+          tooltip: 'Settings',
           onPressed: () => context.push('/settings'),
         ),
       ],
@@ -104,36 +113,20 @@ class _TodayHeader extends StatelessWidget {
 }
 
 class _EmptyUsageState extends StatelessWidget {
-  const _EmptyUsageState();
+  final VoidCallback onRefresh;
+
+  const _EmptyUsageState({required this.onRefresh});
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 48),
-      child: Column(
-        children: [
-          Icon(
-            Icons.hourglass_empty_rounded,
-            size: 48,
-            color: theme.colorScheme.onSurfaceVariant,
-          ),
-          const SizedBox(height: 16),
-          Text(
-            'No usage yet today',
-            style: theme.textTheme.titleMedium,
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 8),
-          Text(
-            "Once you start using your apps, today's stats will show up "
-            'here.',
-            style: theme.textTheme.bodyMedium,
-            textAlign: TextAlign.center,
-          ),
-        ],
-      ),
+    return EmptyStateCard(
+      icon: Icons.hourglass_empty_rounded,
+      title: 'No usage yet today',
+      body:
+          "Once you start using your apps, today's stats will show up "
+          'here.',
+      actionLabel: 'Refresh',
+      onAction: onRefresh,
     );
   }
 }

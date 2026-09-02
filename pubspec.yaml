@@ -65,6 +65,8 @@ dev_dependencies:
   mocktail: ^1.0.5
   flutter_launcher_icons: ^0.14.4
   flutter_native_splash: ^2.4.7
+  integration_test:
+    sdk: flutter
 
 # Placeholder app icon/splash art (a clock-ring motif in the Material Flow
 # accent purple) — swap assets/icon/*.png for real branding once the app

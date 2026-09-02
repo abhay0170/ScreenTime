@@ -120,4 +120,70 @@ void main() {
     expect(result, isEmpty);
     verifyNever(() => appInfoResolver.resolve(any()));
   });
+
+  test(
+    'getTotalForDate sums filtered usage across the requested day',
+    () async {
+      when(() => usageStatsService.queryUsageForRange(any(), any())).thenAnswer(
+        (_) async => {
+          'com.social.app': 1800, // 30 min
+          'com.game.app': 3600, // 60 min
+          'com.short.lived': 5, // filtered out as noise
+        },
+      );
+      when(() => appInfoResolver.resolve('com.social.app')).thenAnswer(
+        (_) async => _appInfo(name: 'Social', packageName: 'com.social.app'),
+      );
+      when(() => appInfoResolver.resolve('com.game.app')).thenAnswer(
+        (_) async => _appInfo(name: 'Game', packageName: 'com.game.app'),
+      );
+
+      final total = await repository.getTotalForDate(
+        DateTime.now().subtract(const Duration(days: 1)),
+      );
+
+      expect(total, const Duration(minutes: 90));
+      verifyNever(() => appInfoResolver.resolve('com.short.lived'));
+    },
+  );
+
+  group('getTodayUsage Drift persistence', () {
+    test('upserts a record per resolved app into AppUsageRecords', () async {
+      when(
+        () => usageStatsService.queryUsageForRange(any(), any()),
+      ).thenAnswer((_) async => {'com.social.app': 1800});
+      when(() => appInfoResolver.resolve('com.social.app')).thenAnswer(
+        (_) async => _appInfo(name: 'Social', packageName: 'com.social.app'),
+      );
+
+      await repository.getTodayUsage();
+
+      final rows = await database.select(database.appUsageRecords).get();
+      expect(rows, hasLength(1));
+      expect(rows.single.packageName, 'com.social.app');
+      expect(rows.single.totalSeconds, 1800);
+    });
+
+    test(
+      'a second call updates the existing row instead of duplicating it',
+      () async {
+        when(
+          () => usageStatsService.queryUsageForRange(any(), any()),
+        ).thenAnswer((_) async => {'com.social.app': 1800});
+        when(() => appInfoResolver.resolve('com.social.app')).thenAnswer(
+          (_) async => _appInfo(name: 'Social', packageName: 'com.social.app'),
+        );
+        await repository.getTodayUsage();
+
+        when(
+          () => usageStatsService.queryUsageForRange(any(), any()),
+        ).thenAnswer((_) async => {'com.social.app': 5400});
+        await repository.getTodayUsage();
+
+        final rows = await database.select(database.appUsageRecords).get();
+        expect(rows, hasLength(1));
+        expect(rows.single.totalSeconds, 5400);
+      },
+    );
+  });
 }
